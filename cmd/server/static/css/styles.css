@@ -1,0 +1,155 @@
+/* Custom Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from { transform: translateY(-10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes scaleIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+/* HTMX Animations */
+.htmx-settling {
+    opacity: 0;
+}
+
+.htmx-settling.fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Form Elements */
+.form-input:focus, .form-select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* Buttons */
+button {
+    transition: all 0.2s ease-in-out;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+/* Table Styles */
+.table-container {
+    scrollbar-width: thin;
+    scrollbar-color: #e5e7eb #f3f4f6;
+}
+
+.table-container::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background: #e5e7eb;
+    border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+    background: #d1d5db;
+}
+
+/* Category Badges */
+.category-badge {
+    transition: all 0.2s ease-in-out;
+}
+
+.category-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Summary Cards */
+.summary-card {
+    animation: scaleIn 0.3s ease-out;
+}
+
+.summary-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Loading States */
+.htmx-request.button {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.htmx-request.button::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Empty State */
+.empty-state {
+    animation: fadeIn 0.5s ease-out;
+}
+
+.empty-state i {
+    transition: transform 0.3s ease-in-out;
+}
+
+.empty-state:hover i {
+    transform: scale(1.1);
+}
+
+/* Month Navigation */
+.month-nav {
+    animation: slideIn 0.3s ease-out;
+}
+
+.month-nav button:hover {
+    transform: translateX(2px);
+}
+
+.month-nav button:first-child:hover {
+    transform: translateX(-2px);
+}
+
+/* Input Month Styles */
+input[type="month"] {
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+input[type="month"]:hover {
+    border-color: #3b82f6;
+}
+
+/* Icons */
+i {
+    transition: transform 0.2s ease-in-out;
+}
+
+button:hover i {
+    transform: scale(1.1);
+} 

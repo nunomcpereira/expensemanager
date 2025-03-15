@@ -1,0 +1,120 @@
+{{ define "expenses-table" }}
+<div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <i class="fas fa-calendar-day mr-1"></i>
+                    Date
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <i class="fas fa-tag mr-1"></i>
+                    Category
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <i class="fas fa-align-left mr-1"></i>
+                    Description
+                </th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <i class="fas fa-dollar-sign mr-1"></i>
+                    Amount
+                </th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <i class="fas fa-calculator mr-1"></i>
+                    Running Total
+                </th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <i class="fas fa-cog mr-1"></i>
+                    Actions
+                </th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+            {{ $runningTotal := 0.0 }}
+            {{ range . }}
+            <tr class="hover:bg-gray-50 transition-colors duration-150">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ .Date.Format "2006-01-02" }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-3 py-1 rounded-full text-sm font-semibold
+                        {{ if eq .Category "Food" }}
+                            bg-green-100 text-green-800
+                        {{ else if eq .Category "Transportation" }}
+                            bg-blue-100 text-blue-800
+                        {{ else if eq .Category "Entertainment" }}
+                            bg-purple-100 text-purple-800
+                        {{ else if eq .Category "Shopping" }}
+                            bg-pink-100 text-pink-800
+                        {{ else if eq .Category "Bills" }}
+                            bg-yellow-100 text-yellow-800
+                        {{ else if eq .Category "Health" }}
+                            bg-red-100 text-red-800
+                        {{ else }}
+                            bg-gray-100 text-gray-800
+                        {{ end }}">
+                        {{ if eq .Category "Food" }}🍽️
+                        {{ else if eq .Category "Transportation" }}🚗
+                        {{ else if eq .Category "Entertainment" }}🎮
+                        {{ else if eq .Category "Shopping" }}🛍️
+                        {{ else if eq .Category "Bills" }}📄
+                        {{ else if eq .Category "Health" }}🏥
+                        {{ else }}📦
+                        {{ end }}
+                        {{ .Category }}
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {{ .Description }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900 font-medium">
+                    ${{ printf "%.2f" .Amount }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900 font-medium">
+                    {{ $runningTotal = add $runningTotal .Amount }}
+                    ${{ printf "%.2f" $runningTotal }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                    <button 
+                        class="p-2 rounded-full bg-red-100 text-red-600 hover:text-white hover:bg-red-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500"
+                        hx-delete="/expenses/delete?id={{ .ID }}&selected-month={{ .Date.Format "2006-01" }}"
+                        hx-target="#expenses-table"
+                        hx-swap="innerHTML"
+                        hx-confirm="Are you sure you want to delete this expense?">
+                        <i class="fas fa-trash-alt text-lg"></i>
+                        <span class="sr-only">Delete</span>
+                    </button>
+                </td>
+            </tr>
+            {{ else }}
+            <tr>
+                <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                    <div class="flex flex-col items-center justify-center space-y-4">
+                        <i class="fas fa-receipt text-6xl text-gray-300"></i>
+                        <p class="text-lg">No expenses found for this month</p>
+                        <p class="text-sm">Add your first expense using the form on the left</p>
+                    </div>
+                </td>
+            </tr>
+            {{ end }}
+        </tbody>
+    </table>
+</div>
+
+<script>
+function deleteExpense(id) {
+    const selectedMonth = document.getElementById('selected-month').value;
+    htmx.ajax('DELETE', `/expenses/delete?id=${id}&selected-month=${selectedMonth}`, {
+        target: '#expenses-table',
+        swap: 'innerHTML',
+        headers: {
+            'HX-Trigger': 'updateSummary'
+        }
+    }).then(() => {
+        // Update summary cards after deletion
+        const summaryUrl = `/summary?selected-month=${selectedMonth}`;
+        htmx.ajax('GET', summaryUrl, '#summary-cards');
+    });
+}
+</script>
+{{ end }} 

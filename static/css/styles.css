@@ -1,0 +1,175 @@
+/* Custom animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+    from { transform: translateX(-20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes scaleIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+/* HTMX animations */
+.htmx-settling tr {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.htmx-swapping {
+    opacity: 0;
+    transition: opacity 0.2s ease-out;
+}
+
+/* Card animations */
+.bg-white {
+    animation: scaleIn 0.3s ease-out;
+}
+
+/* Form styles */
+input, select {
+    transition: all 0.2s ease;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    transform: translateY(-1px);
+}
+
+/* Button hover effects */
+button {
+    transition: all 0.2s ease;
+}
+
+button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #666;
+}
+
+/* Table styles */
+.table-auto {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table-auto th {
+    background: #f9fafb;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.table-auto td, .table-auto th {
+    transition: all 0.2s ease;
+}
+
+/* Category badges */
+span.rounded-full {
+    transition: all 0.2s ease;
+}
+
+span.rounded-full:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Responsive table */
+@media (max-width: 640px) {
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Form validation styles */
+input:invalid, select:invalid {
+    border-color: #ef4444;
+}
+
+input:invalid:focus, select:invalid:focus {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.form-error {
+    color: #ef4444;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    animation: slideIn 0.3s ease-out;
+}
+
+/* Loading states */
+.htmx-request.form button {
+    opacity: 0.7;
+    cursor: wait;
+}
+
+.htmx-request.form button::after {
+    content: "...";
+}
+
+/* Empty state styling */
+.text-gray-500 {
+    transition: color 0.2s ease;
+}
+
+/* Icons */
+i.fas, i.far {
+    transition: all 0.2s ease;
+}
+
+button:hover i {
+    transform: scale(1.1);
+}
+
+/* Summary cards */
+.summary-card {
+    transition: all 0.3s ease;
+}
+
+.summary-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Add expense form */
+.space-y-4 > * {
+    animation: fadeIn 0.3s ease-out;
+    animation-fill-mode: both;
+}
+
+.space-y-4 > *:nth-child(1) { animation-delay: 0.1s; }
+.space-y-4 > *:nth-child(2) { animation-delay: 0.2s; }
+.space-y-4 > *:nth-child(3) { animation-delay: 0.3s; } 

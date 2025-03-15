@@ -1,0 +1,86 @@
+{{ define "month-nav" }}
+<div class="flex justify-between items-center mb-4 bg-white rounded-lg shadow-md p-4">
+    <button onclick="updateMonth(-1)" class="text-gray-600 hover:text-gray-800 transition-colors">
+        <i class="fas fa-chevron-left"></i>
+        Previous
+    </button>
+    <div class="flex items-center">
+        <i class="fas fa-calendar-alt text-blue-500 mr-2"></i>
+        <input type="month" 
+               id="selected-month" 
+               name="selected-month"
+               class="form-input rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+               hx-get="/expenses"
+               hx-trigger="change"
+               hx-target="#expenses-table"
+               hx-include="this">
+    </div>
+    <button onclick="updateMonth(1)" class="text-gray-600 hover:text-gray-800 transition-colors">
+        Next
+        <i class="fas fa-chevron-right"></i>
+    </button>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set initial month value
+    const today = new Date();
+    const initialMonth = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+    const monthInput = document.getElementById('selected-month');
+    monthInput.value = initialMonth;
+    
+    // Set the form's hidden input initial value
+    const formInput = document.getElementById('form-selected-month');
+    if (formInput) {
+        formInput.value = initialMonth;
+    }
+    
+    // Trigger initial load
+    htmx.trigger('#selected-month', 'change');
+});
+
+function updateMonth(offset) {
+    const input = document.getElementById('selected-month');
+    const date = new Date(input.value + '-01');
+    date.setMonth(date.getMonth() + offset);
+    const newMonth = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0');
+    input.value = newMonth;
+    
+    // Update form's hidden input
+    const formInput = document.getElementById('form-selected-month');
+    if (formInput) {
+        formInput.value = newMonth;
+    }
+    
+    // Trigger HTMX requests
+    htmx.trigger('#selected-month', 'change');
+    
+    // Update summary cards
+    const summaryUrl = `/summary?selected-month=${newMonth}`;
+    htmx.ajax('GET', summaryUrl, '#summary-cards');
+}
+
+function updateMonthFromDate(dateStr) {
+    if (!dateStr) return;
+    
+    // Extract YYYY-MM from the full date
+    const monthStr = dateStr.substring(0, 7);
+    
+    // Update both the month picker and the form's hidden input
+    const monthInput = document.getElementById('selected-month');
+    const formInput = document.getElementById('form-selected-month');
+    
+    monthInput.value = monthStr;
+    if (formInput) {
+        formInput.value = monthStr;
+    }
+    
+    // Trigger HTMX requests
+    htmx.trigger('#selected-month', 'change');
+    
+    // Update summary cards
+    const summaryUrl = `/summary?selected-month=${monthStr}`;
+    htmx.ajax('GET', summaryUrl, '#summary-cards');
+}
+</script>
+{{ end }} 

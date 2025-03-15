@@ -1,0 +1,147 @@
+{{ define "admin" }}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrator Page - Expense Manager</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex items-center justify-between mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 flex items-center">
+                <i class="fas fa-cog text-blue-500 mr-3"></i>
+                Admin Page
+            </h1>
+            <a href="/" class="text-blue-600 hover:text-blue-800 transition-colors duration-200 flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Back to Dashboard
+            </a>
+        </div>
+
+        <!-- Notification Area -->
+        <div id="notification" class="hidden mb-6 p-4 rounded-lg"></div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Upload Expenses Card -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-file-upload text-green-500 mr-2"></i>
+                    Upload Expenses
+                </h2>
+                <p class="text-gray-600 mb-4">
+                    Upload a JSON file containing expenses. The file should have the following format:
+                </p>
+                <pre class="bg-gray-100 p-4 rounded-lg mb-4 text-sm overflow-x-auto">
+{
+    "expenses": [
+        {
+            "amount": 25.50,
+            "description": "Lunch",
+            "category": "Food",
+            "date": "2024-03-20"
+        }
+    ]
+}</pre>
+                <form hx-post="/admin/upload-expenses" 
+                      hx-encoding="multipart/form-data"
+                      hx-target="#notification"
+                      hx-swap="innerHTML"
+                      class="space-y-4">
+                    <div class="flex items-center justify-center w-full">
+                        <label for="expense-file" class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
+                                <p class="mb-2 text-sm text-gray-500">
+                                    <span class="font-semibold">Click to upload</span> or drag and drop
+                                </p>
+                                <p class="text-xs text-gray-500">JSON file only</p>
+                            </div>
+                            <input id="expense-file" 
+                                   type="file" 
+                                   name="file" 
+                                   accept=".json"
+                                   class="hidden" 
+                                   required>
+                        </label>
+                    </div>
+                    <button type="submit" 
+                            class="w-full bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors duration-200 flex items-center justify-center">
+                        <i class="fas fa-upload mr-2"></i>
+                        Upload Expenses
+                    </button>
+                </form>
+            </div>
+
+            <!-- Clear Expenses Card -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-trash-alt text-red-500 mr-2"></i>
+                    Clear All Expenses
+                </h2>
+                <p class="text-gray-600 mb-4">
+                    This action will permanently delete all expenses from the database. This action cannot be undone.
+                </p>
+                <button hx-post="/admin/clear-expenses"
+                        hx-confirm="Are you sure you want to delete all expenses? This action cannot be undone."
+                        class="w-full bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors duration-200 flex items-center justify-center">
+                    <i class="fas fa-trash mr-2"></i>
+                    Clear All Expenses
+                </button>
+            </div>
+
+            <!-- Download Expenses Card -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-download text-blue-500 mr-2"></i>
+                    Download Expenses
+                </h2>
+                <p class="text-gray-600 mb-4">
+                    Download all expenses as a JSON file for backup or analysis purposes.
+                </p>
+                <a href="/admin/download-expenses" 
+                   class="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-200 flex items-center justify-center">
+                    <i class="fas fa-download mr-2"></i>
+                    Download Expenses
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Show selected filename
+        document.getElementById('expense-file').addEventListener('change', function(e) {
+            const fileName = e.target.files[0]?.name;
+            if (fileName) {
+                const label = e.target.previousElementSibling;
+                label.querySelector('p:first-of-type').innerHTML = `<span class="font-semibold">${fileName}</span>`;
+            }
+        });
+
+        // Handle notification display
+        document.body.addEventListener('htmx:afterRequest', function(evt) {
+            const notification = document.getElementById('notification');
+            if (evt.detail.successful) {
+                try {
+                    const response = JSON.parse(evt.detail.xhr.response);
+                    notification.className = `mb-6 p-4 rounded-lg ${response.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
+                    notification.textContent = response.message;
+                    notification.classList.remove('hidden');
+                    
+                    // Hide notification after 5 seconds
+                    setTimeout(() => {
+                        notification.classList.add('hidden');
+                    }, 5000);
+                } catch (e) {
+                    console.error('Error parsing response:', e);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+{{ end }} 

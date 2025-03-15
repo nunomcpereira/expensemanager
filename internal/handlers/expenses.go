@@ -7,16 +7,52 @@ import (
 	"time"
 
 	"expensemanager/internal/database"
+	"expensemanager/internal/i18n"
 	"expensemanager/internal/models"
 )
 
 type Handler struct {
 	db   *database.DB
 	tmpl *template.Template
+	i18n *i18n.Manager
 }
 
 func NewHandler(db *database.DB, tmpl *template.Template) *Handler {
-	return &Handler{db: db, tmpl: tmpl}
+	return &Handler{
+		db:   db,
+		tmpl: tmpl,
+	}
+}
+
+// UpdateI18n sets the i18n manager for the handler
+func (h *Handler) UpdateI18n(manager *i18n.Manager) {
+	h.i18n = manager
+}
+
+// TemplateData holds data to be passed to templates
+type TemplateData struct {
+	CurrentMonth       time.Time
+	PreviousMonth      time.Time
+	NextMonth          time.Time
+	Expenses           []models.Expense
+	MonthlyTotal       float64
+	DailyAverage       float64
+	Categories         []string
+	CategoryTotals     map[string]float64
+	Lang               string
+	AvailableLanguages []string
+	Error              string
+	Success            string
+}
+
+// GetTemplateData prepares common template data
+func (h *Handler) GetTemplateData(r *http.Request) *TemplateData {
+	lang := i18n.GetLang(r.Context())
+	return &TemplateData{
+		Lang:               lang,
+		AvailableLanguages: h.i18n.GetAvailableLanguages(),
+		Categories:         models.Categories(),
+	}
 }
 
 func (h *Handler) HandleIndex(w http.ResponseWriter, r *http.Request) {

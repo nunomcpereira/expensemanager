@@ -80,6 +80,7 @@ func main() {
 
 	// Initialize handlers
 	h := handlers.NewHandler(db, tmpl)
+	h.UpdateI18n(i18nManager)
 
 	// Create a new mux for routing
 	mux := http.NewServeMux()
@@ -105,7 +106,7 @@ func main() {
 	handler := middleware.Chain(
 		mux,
 		middleware.SecurityHeaders,
-		middleware.I18n(i18nManager),
+		middleware.WithI18n(i18nManager),
 	)
 
 	log.Println("Server starting at http://localhost:8080")

@@ -1,47 +1,71 @@
 # Expense Manager
 
-A simple and attractive expense manager application built with Go, HTMX, and SQLite.
+A modern web application for managing personal expenses, built with Go and HTMX.
 
 ## Features
 
-- Add expenses with amount, description, category, and date
-- View all expenses in a responsive table
-- Delete expenses
-- Real-time updates using HTMX
-- Attractive UI with Tailwind CSS
-- Local SQLite database storage
+- 💰 Track expenses with categories and descriptions
+- 📊 View monthly summaries and statistics
+- 📅 Navigate through expenses by month
+- 📱 Responsive design with modern UI
+- 🔄 Real-time updates using HTMX
+- 📈 Visual reports and analytics
+- 🛠️ Admin panel for data management
 
-## Prerequisites
+## Tech Stack
 
-- Go 1.16 or later
-- SQLite3
+- Backend: Go
+- Frontend: HTMX, TailwindCSS
+- Database: SQLite
+- Development: Air (Live Reload)
 
-## Installation
+## Getting Started
 
-1. Clone the repository
-2. Navigate to the project directory
-3. Install dependencies:
+### Prerequisites
+
+- Go 1.21 or higher
+- SQLite
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/nunomcpereira/expensemanager.git
+   cd expensemanager
+   ```
+
+2. Install dependencies:
    ```bash
    go mod download
    ```
 
-## Running the Application
-
-1. Start the server:
+3. Run the application:
    ```bash
-   go run main.go
+   ./bin/air
    ```
-2. Open your browser and navigate to `http://localhost:8080`
 
-## Usage
+4. Open http://localhost:8080 in your browser
 
-- To add an expense, fill out the form at the top of the page and click "Add Expense"
-- To delete an expense, click the "Delete" button next to the expense in the table
-- The table updates automatically without page refreshes thanks to HTMX
+## Development
 
-## Technology Stack
+The application uses Air for live reloading during development. Any changes to Go files, templates, or static assets will trigger an automatic rebuild and reload.
 
-- Backend: Go
-- Frontend: HTMX + Tailwind CSS
-- Database: SQLite
-- Additional: Hyperscript for enhanced interactivity 
+## Project Structure
+
+```
+.
+├── cmd/server/          # Main application entry
+│   ├── main.go
+│   ├── static/         # Static assets
+│   └── templates/      # HTML templates
+├── internal/
+│   ├── database/      # Database operations
+│   ├── handlers/      # HTTP handlers
+│   ├── middleware/    # HTTP middleware
+│   └── models/        # Data models
+└── db/                # Database files
+```
+
+## License
+
+MIT License 

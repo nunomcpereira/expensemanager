@@ -5,6 +5,7 @@
     "navigation.settings": "Settings",
     "navigation.previous": "Previous",
     "navigation.next": "Next",
+    "navigation.back_to_dashboard": "Back to Dashboard",
     
     "expenses.add": "Add",
     "expenses.add_expense": "Add New Expense",
@@ -45,6 +46,24 @@
     "reports.percentage": "Percentage",
     "reports.monthly_total": "Monthly Total",
     "reports.total_spent": "Total Spent",
+    "reports.categories": "Categories Used",
+    "reports.monthly_average": "Monthly Average",
+    "reports.monthly_trend": "Monthly Spending Trend",
+    "reports.category_breakdown": "Category Breakdown",
+    
+    "admin.title": "Admin Panel",
+    "admin.upload_expenses": "Upload Expenses",
+    "admin.upload_instructions": "Upload a JSON file containing expenses. The file should follow this format:",
+    "admin.file_upload.click": "Click to upload",
+    "admin.file_upload.drag": "or drag and drop",
+    "admin.file_upload.type": "JSON file only",
+    "admin.upload_button": "Upload Expenses",
+    "admin.clear_expenses": "Clear All Expenses",
+    "admin.clear_instructions": "This action will permanently delete all expenses from the database. This action cannot be undone.",
+    "admin.clear_button": "Clear All Expenses",
+    "admin.download_expenses": "Download Expenses",
+    "admin.download_instructions": "Download all expenses as a JSON file for backup or analysis purposes.",
+    "admin.download_button": "Download Expenses",
     
     "currency.symbol": "$"
 } 

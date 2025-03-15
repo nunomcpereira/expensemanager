@@ -1,10 +1,10 @@
 {{ define "admin" }}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{.Lang}}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Administrator Page - Expense Manager</title>
+    <title>{{t .Lang "admin.title"}} - {{t .Lang "app.title"}}</title>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -13,13 +13,16 @@
 <body class="bg-gray-50 min-h-screen">
     <div class="container mx-auto px-4 py-8">
         <div class="flex items-center justify-between mb-8">
-            <h1 class="text-4xl font-bold text-gray-800 flex items-center">
-                <i class="fas fa-cog text-blue-500 mr-3"></i>
-                Admin Page
-            </h1>
+            <div class="flex items-center space-x-4">
+                <h1 class="text-4xl font-bold text-gray-800 flex items-center">
+                    <i class="fas fa-cog text-blue-500 mr-3"></i>
+                    {{t .Lang "admin.title"}}
+                </h1>
+                {{ template "language-selector" . }}
+            </div>
             <a href="/" class="text-blue-600 hover:text-blue-800 transition-colors duration-200 flex items-center">
                 <i class="fas fa-arrow-left mr-2"></i>
-                Back to Dashboard
+                {{t .Lang "navigation.back_to_dashboard"}}
             </a>
         </div>
 
@@ -31,10 +34,10 @@
             <div class="bg-white rounded-lg shadow-md p-6">
                 <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
                     <i class="fas fa-file-upload text-green-500 mr-2"></i>
-                    Upload Expenses
+                    {{t .Lang "admin.upload_expenses"}}
                 </h2>
                 <p class="text-gray-600 mb-4">
-                    Upload a JSON file containing expenses. The file should have the following format:
+                    {{t .Lang "admin.upload_instructions"}}
                 </p>
                 <pre class="bg-gray-100 p-4 rounded-lg mb-4 text-sm overflow-x-auto">
 {
@@ -57,9 +60,9 @@
                             <div class="flex flex-col items-center justify-center pt-5 pb-6">
                                 <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
                                 <p class="mb-2 text-sm text-gray-500">
-                                    <span class="font-semibold">Click to upload</span> or drag and drop
+                                    <span class="font-semibold">{{t .Lang "admin.file_upload.click"}}</span> {{t .Lang "admin.file_upload.drag"}}
                                 </p>
-                                <p class="text-xs text-gray-500">JSON file only</p>
+                                <p class="text-xs text-gray-500">{{t .Lang "admin.file_upload.type"}}</p>
                             </div>
                             <input id="expense-file" 
                                    type="file" 
@@ -72,7 +75,7 @@
                     <button type="submit" 
                             class="w-full bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors duration-200 flex items-center justify-center">
                         <i class="fas fa-upload mr-2"></i>
-                        Upload Expenses
+                        {{t .Lang "admin.upload_button"}}
                     </button>
                 </form>
             </div>
@@ -81,16 +84,16 @@
             <div class="bg-white rounded-lg shadow-md p-6">
                 <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
                     <i class="fas fa-trash-alt text-red-500 mr-2"></i>
-                    Clear All Expenses
+                    {{t .Lang "admin.clear_expenses"}}
                 </h2>
                 <p class="text-gray-600 mb-4">
-                    This action will permanently delete all expenses from the database. This action cannot be undone.
+                    {{t .Lang "admin.clear_instructions"}}
                 </p>
                 <button hx-post="/admin/clear-expenses"
-                        hx-confirm="Are you sure you want to delete all expenses? This action cannot be undone."
+                        hx-confirm="{{t .Lang "admin.clear_instructions"}}"
                         class="w-full bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors duration-200 flex items-center justify-center">
                     <i class="fas fa-trash mr-2"></i>
-                    Clear All Expenses
+                    {{t .Lang "admin.clear_button"}}
                 </button>
             </div>
 
@@ -98,15 +101,15 @@
             <div class="bg-white rounded-lg shadow-md p-6">
                 <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
                     <i class="fas fa-download text-blue-500 mr-2"></i>
-                    Download Expenses
+                    {{t .Lang "admin.download_expenses"}}
                 </h2>
                 <p class="text-gray-600 mb-4">
-                    Download all expenses as a JSON file for backup or analysis purposes.
+                    {{t .Lang "admin.download_instructions"}}
                 </p>
                 <a href="/admin/download-expenses" 
                    class="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-200 flex items-center justify-center">
                     <i class="fas fa-download mr-2"></i>
-                    Download Expenses
+                    {{t .Lang "admin.download_button"}}
                 </a>
             </div>
         </div>

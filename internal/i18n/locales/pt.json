@@ -5,6 +5,7 @@
     "navigation.settings": "Configurações",
     "navigation.previous": "Anterior",
     "navigation.next": "Próximo",
+    "navigation.back_to_dashboard": "Voltar ao Painel",
     
     "expenses.add": "Adicionar",
     "expenses.add_expense": "Nova Despesa",
@@ -45,6 +46,24 @@
     "reports.percentage": "Porcentagem",
     "reports.monthly_total": "Total Mensal",
     "reports.total_spent": "Total Gasto",
+    "reports.categories": "Categorias Utilizadas",
+    "reports.monthly_average": "Média Mensal",
+    "reports.monthly_trend": "Tendência Mensal de Gastos",
+    "reports.category_breakdown": "Detalhamento por Categoria",
+    
+    "admin.title": "Administração",
+    "admin.upload_expenses": "Enviar Despesas",
+    "admin.upload_instructions": "Envie um arquivo JSON contendo despesas. O arquivo deve ter o seguinte formato:",
+    "admin.upload_button": "Enviar Despesas",
+    "admin.clear_expenses": "Limpar Todas as Despesas",
+    "admin.clear_instructions": "Esta ação irá excluir permanentemente todas as despesas do banco de dados. Esta ação não pode ser desfeita.",
+    "admin.clear_button": "Limpar Todas as Despesas",
+    "admin.download_expenses": "Baixar Despesas",
+    "admin.download_instructions": "Baixe todas as despesas como um arquivo JSON para backup ou análise.",
+    "admin.download_button": "Baixar Despesas",
+    "admin.file_upload.click": "Clique para enviar",
+    "admin.file_upload.drag": "ou arraste e solte",
+    "admin.file_upload.type": "Apenas arquivo JSON",
     
     "currency.symbol": "R$"
 } 

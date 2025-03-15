@@ -58,6 +58,19 @@ func main() {
 			}
 			return a / b
 		},
+		// Comparison functions
+		"gt": func(a, b float64) bool {
+			return a > b
+		},
+		"lt": func(a, b float64) bool {
+			return a < b
+		},
+		"eq": func(a, b float64) bool {
+			return a == b
+		},
+		"eqs": func(a, b string) bool {
+			return a == b
+		},
 		// Time functions
 		"now": time.Now,
 		"formatDate": func(t time.Time) string {

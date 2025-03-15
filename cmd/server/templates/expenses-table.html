@@ -32,62 +32,63 @@
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
+                {{ if not .Expenses }}
+                <tr>
+                    <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                        {{t .Lang "expenses.no_expenses"}}
+                        <p class="mt-2 text-sm">{{t .Lang "expenses.add_first"}}</p>
+                    </td>
+                </tr>
+                {{ else }}
                 {{ $runningTotal := 0.0 }}
-                {{ range . }}
+                {{ range .Expenses }}
                 <tr class="hover:bg-gray-50 transition-colors duration-150">
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {{ formatDate .Date }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="px-3 py-1 rounded-full text-sm font-semibold
-                            {{ if eq .Category "Food" }}
+                            {{ if eqs .Category "food" }}
                                 bg-green-100 text-green-800
-                            {{ else if eq .Category "Transportation" }}
+                            {{ else if eqs .Category "transportation" }}
                                 bg-blue-100 text-blue-800
-                            {{ else if eq .Category "Entertainment" }}
+                            {{ else if eqs .Category "entertainment" }}
                                 bg-purple-100 text-purple-800
-                            {{ else if eq .Category "Shopping" }}
+                            {{ else if eqs .Category "shopping" }}
                                 bg-pink-100 text-pink-800
-                            {{ else if eq .Category "Bills" }}
+                            {{ else if eqs .Category "bills" }}
                                 bg-yellow-100 text-yellow-800
-                            {{ else if eq .Category "Health" }}
+                            {{ else if eqs .Category "health" }}
                                 bg-red-100 text-red-800
                             {{ else }}
                                 bg-gray-100 text-gray-800
                             {{ end }}">
-                            {{ if eq .Category "Food" }}🍽️
-                            {{ else if eq .Category "Transportation" }}🚗
-                            {{ else if eq .Category "Entertainment" }}🎮
-                            {{ else if eq .Category "Shopping" }}🛍️
-                            {{ else if eq .Category "Bills" }}📄
-                            {{ else if eq .Category "Health" }}🏥
-                            {{ else }}📦
-                            {{ end }}
-                            {{ .Category }}
+                            {{t $.Lang (printf "categories.%s" .Category)}}
                         </span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {{ .Description }}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900 font-medium">
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">
                         {{ formatMoney .Amount }}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900 font-medium">
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">
                         {{ $runningTotal = add $runningTotal .Amount }}
                         {{ formatMoney $runningTotal }}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center">
-                        <button 
-                            class="p-2 rounded-full bg-red-100 text-red-600 hover:text-white hover:bg-red-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500"
-                            hx-delete="/expenses/delete?id={{ .ID }}&selected-month={{ formatDate .Date }}"
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-center">
+                        <button
+                            class="text-red-600 hover:text-red-900 transition-colors duration-150"
+                            hx-delete="/expenses/delete?id={{.ID}}"
+                            hx-confirm="{{t $.Lang "expenses.delete_confirm"}}"
                             hx-target="#expenses-table"
-                            hx-swap="innerHTML"
-                            hx-confirm="{{t .Lang "expenses.delete_confirm"}}">
-                            <i class="fas fa-trash-alt text-lg"></i>
-                            <span class="sr-only">{{t .Lang "expenses.delete"}}</span>
+                            hx-swap="innerHTML">
+                            <i class="fas fa-trash"></i>
+                            <span class="sr-only">{{t $.Lang "expenses.delete"}}</span>
                         </button>
                     </td>
                 </tr>
+                {{ end }}
                 {{ end }}
             </tbody>
         </table>
@@ -95,97 +96,49 @@
 
     <!-- Mobile Card View -->
     <div class="md:hidden space-y-4">
-        {{ $runningTotal := 0.0 }}
-        {{ range . }}
-        <div class="bg-white rounded-xl shadow-md p-4 space-y-3 touch-manipulation">
-            <div class="flex justify-between items-start">
+        {{ if not .Expenses }}
+        <div class="bg-white p-4 rounded-lg shadow text-center text-gray-500">
+            {{t .Lang "expenses.no_expenses"}}
+            <p class="mt-2 text-sm">{{t .Lang "expenses.add_first"}}</p>
+        </div>
+        {{ else }}
+        {{ range .Expenses }}
+        <div class="bg-white rounded-lg shadow p-4">
+            <div class="flex justify-between items-start mb-2">
                 <span class="px-3 py-1 rounded-full text-sm font-semibold
-                    {{ if eq .Category "Food" }}
+                    {{ if eqs .Category "food" }}
                         bg-green-100 text-green-800
-                    {{ else if eq .Category "Transportation" }}
+                    {{ else if eqs .Category "transportation" }}
                         bg-blue-100 text-blue-800
-                    {{ else if eq .Category "Entertainment" }}
+                    {{ else if eqs .Category "entertainment" }}
                         bg-purple-100 text-purple-800
-                    {{ else if eq .Category "Shopping" }}
+                    {{ else if eqs .Category "shopping" }}
                         bg-pink-100 text-pink-800
-                    {{ else if eq .Category "Bills" }}
+                    {{ else if eqs .Category "bills" }}
                         bg-yellow-100 text-yellow-800
-                    {{ else if eq .Category "Health" }}
+                    {{ else if eqs .Category "health" }}
                         bg-red-100 text-red-800
                     {{ else }}
                         bg-gray-100 text-gray-800
                     {{ end }}">
-                    {{ if eq .Category "Food" }}🍽️
-                    {{ else if eq .Category "Transportation" }}🚗
-                    {{ else if eq .Category "Entertainment" }}🎮
-                    {{ else if eq .Category "Shopping" }}🛍️
-                    {{ else if eq .Category "Bills" }}📄
-                    {{ else if eq .Category "Health" }}🏥
-                    {{ else }}📦
-                    {{ end }}
-                    {{ .Category }}
+                    {{t $.Lang (printf "categories.%s" .Category)}}
                 </span>
-                <button 
-                    class="p-3 rounded-full bg-red-100 text-red-600 hover:text-white hover:bg-red-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 touch-manipulation"
-                    hx-delete="/expenses/delete?id={{ .ID }}&selected-month={{ formatDate .Date }}"
+                <button
+                    class="text-red-600 hover:text-red-900 transition-colors duration-150"
+                    hx-delete="/expenses/delete?id={{.ID}}"
+                    hx-confirm="{{t $.Lang "expenses.delete_confirm"}}"
                     hx-target="#expenses-table"
-                    hx-swap="innerHTML"
-                    hx-confirm="{{t .Lang "expenses.delete_confirm"}}">
-                    <i class="fas fa-trash-alt text-lg"></i>
-                    <span class="sr-only">{{t .Lang "expenses.delete"}}</span>
+                    hx-swap="innerHTML">
+                    <i class="fas fa-trash"></i>
+                    <span class="sr-only">{{t $.Lang "expenses.delete"}}</span>
                 </button>
             </div>
-            <div class="text-lg font-medium text-gray-900">{{ .Description }}</div>
-            <div class="flex justify-between items-center text-sm text-gray-500">
-                <div class="flex items-center">
-                    <i class="fas fa-calendar-day text-gray-400 mr-2"></i>
-                    {{ formatDate .Date }}
-                </div>
-                <div class="font-semibold text-gray-900 text-lg">{{ formatMoney .Amount }}</div>
-            </div>
-            {{ $runningTotal = add $runningTotal .Amount }}
-            <div class="text-xs text-right text-gray-500 flex items-center justify-end">
-                <i class="fas fa-calculator text-gray-400 mr-2"></i>
-                {{t .Lang "expenses.running_total"}}: {{ formatMoney $runningTotal }}
-            </div>
+            <div class="text-sm text-gray-500">{{ formatDate .Date }}</div>
+            <div class="mt-2 text-gray-700">{{ .Description }}</div>
+            <div class="mt-2 text-lg font-semibold text-gray-900">{{ formatMoney .Amount }}</div>
         </div>
-        {{ else }}
-        <div class="bg-white rounded-xl shadow-md p-8 text-center">
-            <div class="flex flex-col items-center justify-center space-y-4">
-                <div class="w-16 h-16 flex items-center justify-center bg-gray-100 text-gray-400 rounded-full">
-                    <i class="fas fa-receipt text-3xl"></i>
-                </div>
-                <p class="text-lg text-gray-500">{{t .Lang "expenses.no_expenses"}}</p>
-                <p class="text-sm text-gray-400">{{t .Lang "expenses.add_first"}}</p>
-                <button onclick="toggleAddExpenseForm()" 
-                        class="mt-4 bg-blue-500 text-white px-6 py-3 rounded-xl text-sm font-medium hover:bg-blue-600 transition-colors duration-200 flex items-center">
-                    <i class="fas fa-plus mr-2"></i>
-                    {{t .Lang "expenses.add_button"}}
-                </button>
-            </div>
-        </div>
+        {{ end }}
         {{ end }}
     </div>
 </div>
-
-<script>
-function deleteExpense(id) {
-    const selectedMonth = document.getElementById('selected-month').value;
-    htmx.ajax('DELETE', `/expenses/delete?id=${id}&selected-month=${selectedMonth}`, {
-        target: '#expenses-table',
-        swap: 'innerHTML',
-        headers: {
-            'HX-Trigger': 'updateSummary'
-        }
-    }).then(() => {
-        const summaryUrl = `/summary?selected-month=${selectedMonth}`;
-        htmx.ajax('GET', summaryUrl, '#summary-cards');
-        
-        // Trigger haptic feedback on successful delete
-        if (window.navigator && window.navigator.vibrate) {
-            window.navigator.vibrate(100);
-        }
-    });
-}
-</script>
 {{ end }} 

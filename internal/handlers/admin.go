@@ -16,7 +16,10 @@ type UploadResponse struct {
 }
 
 func (h *Handler) HandleAdmin(w http.ResponseWriter, r *http.Request) {
-	if err := h.tmpl.ExecuteTemplate(w, "admin", nil); err != nil {
+	// Get base template data
+	data := h.GetTemplateData(r)
+
+	if err := h.tmpl.ExecuteTemplate(w, "admin", data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

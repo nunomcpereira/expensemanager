@@ -116,13 +116,13 @@
                             name="category" 
                             required
                             class="form-select block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-lg">
-                        <option value="Food">🍽️ {{t .Lang "categories.food"}}</option>
-                        <option value="Transportation">🚗 {{t .Lang "categories.transportation"}}</option>
-                        <option value="Entertainment">🎮 {{t .Lang "categories.entertainment"}}</option>
-                        <option value="Shopping">🛍️ {{t .Lang "categories.shopping"}}</option>
-                        <option value="Bills">📄 {{t .Lang "categories.bills"}}</option>
-                        <option value="Health">🏥 {{t .Lang "categories.health"}}</option>
-                        <option value="Other">📦 {{t .Lang "categories.other"}}</option>
+                        <option value="food">🍽️ {{t .Lang "categories.food"}}</option>
+                        <option value="transportation">🚗 {{t .Lang "categories.transportation"}}</option>
+                        <option value="entertainment">🎮 {{t .Lang "categories.entertainment"}}</option>
+                        <option value="shopping">🛍️ {{t .Lang "categories.shopping"}}</option>
+                        <option value="bills">📄 {{t .Lang "categories.bills"}}</option>
+                        <option value="health">🏥 {{t .Lang "categories.health"}}</option>
+                        <option value="other">📦 {{t .Lang "categories.other"}}</option>
                     </select>
                 </div>
                 
@@ -162,10 +162,13 @@
     <div class="container mx-auto px-4 py-8">
         <!-- Header -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 space-y-4 md:space-y-0">
-            <h1 class="text-2xl md:text-4xl font-bold text-gray-800 flex items-center">
-                <i class="fas fa-wallet text-blue-500 mr-3"></i>
-                {{t .Lang "app.title"}}
-            </h1>
+            <div class="flex items-center space-x-4">
+                <h1 class="text-2xl md:text-4xl font-bold text-gray-800 flex items-center">
+                    <i class="fas fa-wallet text-blue-500 mr-3"></i>
+                    {{t .Lang "app.title"}}
+                </h1>
+                {{ template "language-selector" . }}
+            </div>
             <div class="hidden md:flex space-x-4">
                 <a href="/reports" class="flex items-center bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
                     <i class="fas fa-chart-line mr-2"></i>
@@ -225,13 +228,13 @@
                                     name="category" 
                                     required
                                     class="form-select mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                                <option value="Food">🍽️ {{t .Lang "categories.food"}}</option>
-                                <option value="Transportation">🚗 {{t .Lang "categories.transportation"}}</option>
-                                <option value="Entertainment">🎮 {{t .Lang "categories.entertainment"}}</option>
-                                <option value="Shopping">🛍️ {{t .Lang "categories.shopping"}}</option>
-                                <option value="Bills">📄 {{t .Lang "categories.bills"}}</option>
-                                <option value="Health">🏥 {{t .Lang "categories.health"}}</option>
-                                <option value="Other">📦 {{t .Lang "categories.other"}}</option>
+                                <option value="food">🍽️ {{t .Lang "categories.food"}}</option>
+                                <option value="transportation">🚗 {{t .Lang "categories.transportation"}}</option>
+                                <option value="entertainment">🎮 {{t .Lang "categories.entertainment"}}</option>
+                                <option value="shopping">🛍️ {{t .Lang "categories.shopping"}}</option>
+                                <option value="bills">📄 {{t .Lang "categories.bills"}}</option>
+                                <option value="health">🏥 {{t .Lang "categories.health"}}</option>
+                                <option value="other">📦 {{t .Lang "categories.other"}}</option>
                             </select>
                         </div>
                         <div>
@@ -269,7 +272,7 @@
                 {{ template "month-nav" . }}
                 <div class="bg-white rounded-lg shadow-md">
                     <div id="expenses-table">
-                        {{ template "expenses-table" .Expenses }}
+                        {{ template "expenses-table" . }}
                     </div>
                 </div>
             </div>

@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"time"
 
 	"expensemanager/internal/i18n"
 )
@@ -18,9 +19,10 @@ func WithI18n(manager *i18n.Manager) Middleware {
 				}
 			}
 
-			// Set default language if none specified
-			if lang == "" {
-				lang = "en"
+			// Validate language or set default
+			availableLangs := manager.GetAvailableLanguages()
+			if lang == "" || !containsLang(availableLangs, lang) {
+				lang = manager.GetDefaultLang()
 			}
 
 			// Set language cookie
@@ -28,8 +30,9 @@ func WithI18n(manager *i18n.Manager) Middleware {
 				Name:     "lang",
 				Value:    lang,
 				Path:     "/",
-				MaxAge:   365 * 24 * 60 * 60, // 1 year
+				Expires:  time.Now().AddDate(1, 0, 0), // 1 year
 				HttpOnly: true,
+				SameSite: http.SameSiteLaxMode,
 				Secure:   r.TLS != nil,
 			})
 
@@ -38,4 +41,14 @@ func WithI18n(manager *i18n.Manager) Middleware {
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+// containsLang checks if a language is in the available languages slice
+func containsLang(slice []string, str string) bool {
+	for _, s := range slice {
+		if s == str {
+			return true
+		}
+	}
+	return false
 }

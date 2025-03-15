@@ -6,13 +6,23 @@ import (
 )
 
 func (h *Handler) HandleReports(w http.ResponseWriter, r *http.Request) {
+	// Get base template data
+	data := h.GetTemplateData(r)
+
+	// Get analytics data
 	analytics, err := h.db.GetAnalytics()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	if err := h.tmpl.ExecuteTemplate(w, "reports", analytics); err != nil {
+	// Combine analytics with template data
+	data.TotalSpent = analytics.TotalSpent
+	data.CategoryTotals = analytics.CategoryTotals
+	data.MonthlyTotals = analytics.MonthlyTotals
+	data.MonthlyAverage = analytics.MonthlyAverage
+
+	if err := h.tmpl.ExecuteTemplate(w, "reports", data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

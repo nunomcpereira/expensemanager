@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"strings"
 
 	"expensemanager/internal/models"
 )
@@ -127,10 +128,13 @@ func (db *DB) GetAnalytics() (models.Analytics, error) {
 }
 
 func (db *DB) AddExpense(amount float64, description, category, date string) error {
-	_, err := db.Exec(
-		"INSERT INTO expenses (amount, description, category, date) VALUES (?, ?, ?, ?)",
-		amount, description, category, date,
-	)
+	// Convert category to lowercase
+	category = strings.ToLower(category)
+
+	_, err := db.Exec(`
+		INSERT INTO expenses (amount, description, category, date)
+		VALUES (?, ?, ?, ?)
+	`, amount, description, category, date)
 	return err
 }
 

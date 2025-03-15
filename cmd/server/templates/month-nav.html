@@ -1,23 +1,25 @@
 {{ define "month-nav" }}
-<div class="flex justify-between items-center mb-4 bg-white rounded-lg shadow-md p-4">
-    <button onclick="updateMonth(-1)" class="text-gray-600 hover:text-gray-800 transition-colors">
-        <i class="fas fa-chevron-left"></i>
-        Previous
+<div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4 bg-white rounded-lg shadow-md p-4">
+    <button onclick="updateMonth(-1)" 
+            class="w-full sm:w-auto flex items-center justify-center px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors touch-manipulation">
+        <i class="fas fa-chevron-left mr-2"></i>
+        {{t .Lang "navigation.previous"}}
     </button>
-    <div class="flex items-center">
-        <i class="fas fa-calendar-alt text-blue-500 mr-2"></i>
+    <div class="flex items-center w-full sm:w-auto">
+        <i class="fas fa-calendar-alt text-blue-500 mr-2 hidden sm:block"></i>
         <input type="month" 
                id="selected-month" 
                name="selected-month"
-               class="form-input rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+               class="form-input w-full sm:w-auto rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-center"
                hx-get="/expenses"
                hx-trigger="change"
                hx-target="#expenses-table"
                hx-include="this">
     </div>
-    <button onclick="updateMonth(1)" class="text-gray-600 hover:text-gray-800 transition-colors">
-        Next
-        <i class="fas fa-chevron-right"></i>
+    <button onclick="updateMonth(1)" 
+            class="w-full sm:w-auto flex items-center justify-center px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors touch-manipulation">
+        {{t .Lang "navigation.next"}}
+        <i class="fas fa-chevron-right ml-2"></i>
     </button>
 </div>
 
@@ -29,11 +31,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const monthInput = document.getElementById('selected-month');
     monthInput.value = initialMonth;
     
-    // Set the form's hidden input initial value
-    const formInput = document.getElementById('form-selected-month');
-    if (formInput) {
-        formInput.value = initialMonth;
-    }
+    // Set the form's hidden inputs initial value
+    const formInputs = [
+        document.getElementById('form-selected-month'),
+        document.getElementById('form-selected-month-mobile')
+    ];
+    
+    formInputs.forEach(input => {
+        if (input) {
+            input.value = initialMonth;
+        }
+    });
     
     // Trigger initial load
     htmx.trigger('#selected-month', 'change');
@@ -46,11 +54,17 @@ function updateMonth(offset) {
     const newMonth = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0');
     input.value = newMonth;
     
-    // Update form's hidden input
-    const formInput = document.getElementById('form-selected-month');
-    if (formInput) {
-        formInput.value = newMonth;
-    }
+    // Update form's hidden inputs
+    const formInputs = [
+        document.getElementById('form-selected-month'),
+        document.getElementById('form-selected-month-mobile')
+    ];
+    
+    formInputs.forEach(input => {
+        if (input) {
+            input.value = newMonth;
+        }
+    });
     
     // Trigger HTMX requests
     htmx.trigger('#selected-month', 'change');
@@ -60,27 +74,52 @@ function updateMonth(offset) {
     htmx.ajax('GET', summaryUrl, '#summary-cards');
 }
 
-function updateMonthFromDate(dateStr) {
-    if (!dateStr) return;
+// Add touch swipe support for month navigation
+let touchStartX = 0;
+let touchEndX = 0;
+let touchStartY = 0;
+let touchEndY = 0;
+
+document.addEventListener('touchstart', e => {
+    touchStartX = e.changedTouches[0].screenX;
+    touchStartY = e.changedTouches[0].screenY;
+});
+
+document.addEventListener('touchend', e => {
+    touchEndX = e.changedTouches[0].screenX;
+    touchEndY = e.changedTouches[0].screenY;
+    handleSwipe();
+});
+
+function handleSwipe() {
+    const minSwipeDistance = 50;
+    const swipeDistanceX = touchEndX - touchStartX;
+    const swipeDistanceY = touchEndY - touchStartY;
     
-    // Extract YYYY-MM from the full date
-    const monthStr = dateStr.substring(0, 7);
-    
-    // Update both the month picker and the form's hidden input
-    const monthInput = document.getElementById('selected-month');
-    const formInput = document.getElementById('form-selected-month');
-    
-    monthInput.value = monthStr;
-    if (formInput) {
-        formInput.value = monthStr;
+    // Only handle horizontal swipes (ignore vertical swipes)
+    if (Math.abs(swipeDistanceX) > Math.abs(swipeDistanceY) && Math.abs(swipeDistanceX) > minSwipeDistance) {
+        if (swipeDistanceX > 0) {
+            // Swipe right - previous month
+            updateMonth(-1);
+        } else {
+            // Swipe left - next month
+            updateMonth(1);
+        }
     }
-    
-    // Trigger HTMX requests
-    htmx.trigger('#selected-month', 'change');
-    
-    // Update summary cards
-    const summaryUrl = `/summary?selected-month=${monthStr}`;
-    htmx.ajax('GET', summaryUrl, '#summary-cards');
 }
+
+// Add haptic feedback for month changes (if supported)
+function triggerHapticFeedback() {
+    if (window.navigator && window.navigator.vibrate) {
+        window.navigator.vibrate(50);
+    }
+}
+
+// Update month functions to include haptic feedback
+const originalUpdateMonth = updateMonth;
+updateMonth = function(offset) {
+    originalUpdateMonth(offset);
+    triggerHapticFeedback();
+};
 </script>
 {{ end }} 

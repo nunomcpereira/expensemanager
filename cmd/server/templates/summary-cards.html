@@ -1,25 +1,83 @@
 {{define "summary-cards"}}
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    <div class="bg-white rounded-lg shadow-md p-6 transform hover:scale-105 transition-transform duration-200">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+    <!-- Monthly Total Card -->
+    <div class="bg-white rounded-xl shadow-md p-4 sm:p-6 transform hover:scale-105 transition-transform duration-200 touch-manipulation">
         <div class="flex items-center justify-between">
-            <h2 class="text-xl font-semibold text-gray-700">Total for Month</h2>
-            <i class="fas fa-money-bill-wave text-green-500 text-2xl"></i>
+            <h2 class="text-lg sm:text-xl font-semibold text-gray-700">{{t .Lang "summary.monthly_total"}}</h2>
+            <div class="w-12 h-12 flex items-center justify-center bg-green-100 text-green-500 rounded-full">
+                <i class="fas fa-money-bill-wave text-xl sm:text-2xl"></i>
+            </div>
         </div>
-        <p class="text-3xl font-bold text-gray-900 mt-2">${{ printf "%.2f" .MonthTotal }}</p>
+        <p class="text-2xl sm:text-3xl font-bold text-gray-900 mt-4">{{formatMoney .MonthTotal}}</p>
+        <p class="text-sm text-gray-500 mt-2">{{t .Lang "summary.this_month"}}</p>
+        
+        <!-- Progress bar showing percentage of month passed -->
+        <div class="mt-4">
+            <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div class="h-full bg-green-500 rounded-full" style="width: {{.MonthProgress}}%;"></div>
+            </div>
+            <p class="text-xs text-gray-400 mt-2 text-right">{{.MonthProgress}}% {{t .Lang "summary.month_progress"}}</p>
+        </div>
     </div>
-    <div class="bg-white rounded-lg shadow-md p-6 transform hover:scale-105 transition-transform duration-200">
+
+    <!-- Daily Average Card -->
+    <div class="bg-white rounded-xl shadow-md p-4 sm:p-6 transform hover:scale-105 transition-transform duration-200 touch-manipulation">
         <div class="flex items-center justify-between">
-            <h2 class="text-xl font-semibold text-gray-700">Average per Day</h2>
-            <i class="fas fa-calendar-alt text-blue-500 text-2xl"></i>
+            <h2 class="text-lg sm:text-xl font-semibold text-gray-700">{{t .Lang "summary.daily_average"}}</h2>
+            <div class="w-12 h-12 flex items-center justify-center bg-blue-100 text-blue-500 rounded-full">
+                <i class="fas fa-calendar-day text-xl sm:text-2xl"></i>
+            </div>
         </div>
-        <p class="text-3xl font-bold text-gray-900 mt-2">${{ printf "%.2f" .DailyAverage }}</p>
+        <p class="text-2xl sm:text-3xl font-bold text-gray-900 mt-4">{{formatMoney .DailyAverage}}</p>
+        <p class="text-sm text-gray-500 mt-2">{{t .Lang "summary.per_day"}}</p>
+        
+        <!-- Comparison with previous day -->
+        <div class="mt-4 flex items-center">
+            {{ if gt .DailyTrend 0 }}
+            <span class="text-red-500 flex items-center">
+                <i class="fas fa-arrow-up mr-1"></i>
+                {{.DailyTrend}}%
+            </span>
+            {{ else if lt .DailyTrend 0 }}
+            <span class="text-green-500 flex items-center">
+                <i class="fas fa-arrow-down mr-1"></i>
+                {{mul .DailyTrend -1}}%
+            </span>
+            {{ else }}
+            <span class="text-gray-500 flex items-center">
+                <i class="fas fa-minus mr-1"></i>
+                0%
+            </span>
+            {{ end }}
+            <span class="text-xs text-gray-400 ml-2">{{t .Lang "summary.vs_yesterday"}}</span>
+        </div>
     </div>
-    <div class="bg-white rounded-lg shadow-md p-6 transform hover:scale-105 transition-transform duration-200">
+
+    <!-- Categories Card -->
+    <div class="bg-white rounded-xl shadow-md p-4 sm:p-6 transform hover:scale-105 transition-transform duration-200 touch-manipulation sm:col-span-2 lg:col-span-1">
         <div class="flex items-center justify-between">
-            <h2 class="text-xl font-semibold text-gray-700">Categories This Month</h2>
-            <i class="fas fa-tags text-purple-500 text-2xl"></i>
+            <h2 class="text-lg sm:text-xl font-semibold text-gray-700">{{t .Lang "summary.categories_used"}}</h2>
+            <div class="w-12 h-12 flex items-center justify-center bg-purple-100 text-purple-500 rounded-full">
+                <i class="fas fa-tags text-xl sm:text-2xl"></i>
+            </div>
         </div>
-        <p class="text-3xl font-bold text-gray-900 mt-2">{{ .CategoryCount }}</p>
+        <div class="mt-4 flex flex-wrap gap-2">
+            {{ range .Categories }}
+            <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
+                {{ if eq . "Food" }}🍽️
+                {{ else if eq . "Transportation" }}🚗
+                {{ else if eq . "Entertainment" }}🎮
+                {{ else if eq . "Shopping" }}🛍️
+                {{ else if eq . "Bills" }}📄
+                {{ else if eq . "Health" }}🏥
+                {{ else }}📦
+                {{ end }}
+                {{.}}
+            </span>
+            {{ end }}
+        </div>
+        <p class="text-2xl sm:text-3xl font-bold text-gray-900 mt-4">{{ .CategoryCount }}</p>
+        <p class="text-sm text-gray-500 mt-2">{{t .Lang "summary.this_month"}}</p>
     </div>
 </div>
 {{end}} 

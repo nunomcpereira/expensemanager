@@ -1,0 +1,50 @@
+{
+    "app.title": "Expense Manager",
+    
+    "navigation.reports": "Reports",
+    "navigation.settings": "Settings",
+    "navigation.previous": "Previous",
+    "navigation.next": "Next",
+    
+    "expenses.add": "Add",
+    "expenses.add_expense": "Add New Expense",
+    "expenses.add_button": "Add Expense",
+    "expenses.amount": "Amount",
+    "expenses.category": "Category",
+    "expenses.description": "Description",
+    "expenses.date": "Date",
+    "expenses.actions": "Actions",
+    "expenses.delete": "Delete",
+    "expenses.delete_confirm": "Are you sure you want to delete this expense?",
+    "expenses.running_total": "Running Total",
+    "expenses.no_expenses": "No expenses found for this month",
+    "expenses.add_first": "Add your first expense using the form",
+    
+    "categories.food": "Food",
+    "categories.transportation": "Transportation",
+    "categories.entertainment": "Entertainment",
+    "categories.shopping": "Shopping",
+    "categories.bills": "Bills",
+    "categories.health": "Health",
+    "categories.other": "Other",
+    
+    "summary.monthly_total": "Total for Month",
+    "summary.daily_average": "Average per Day",
+    "summary.categories_used": "Categories This Month",
+    "summary.this_month": "This Month",
+    "summary.per_day": "Per Day",
+    "summary.vs_yesterday": "vs Yesterday",
+    "summary.month_progress": "of month passed",
+    
+    "reports.title": "Expense Reports",
+    "reports.back_to_expenses": "Back to Expenses",
+    "reports.monthly_comparison": "Monthly Comparison",
+    "reports.category_distribution": "Category Distribution",
+    "reports.category": "Category",
+    "reports.total": "Total",
+    "reports.percentage": "Percentage",
+    "reports.monthly_total": "Monthly Total",
+    "reports.total_spent": "Total Spent",
+    
+    "currency.symbol": "$"
+} 

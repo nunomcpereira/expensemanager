@@ -2,13 +2,16 @@ package main
 
 import (
 	"embed"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"expensemanager/internal/database"
 	"expensemanager/internal/handlers"
+	"expensemanager/internal/i18n"
 	"expensemanager/internal/middleware"
 
 	_ "github.com/mattn/go-sqlite3" // SQLite driver
@@ -31,8 +34,15 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Initialize i18n manager
+	i18nManager := i18n.NewManager("en")
+	if err := i18nManager.LoadTranslations("internal/i18n/locales"); err != nil {
+		log.Fatal(err)
+	}
+
 	// Template functions
 	funcMap := template.FuncMap{
+		// Math operations
 		"add": func(a, b float64) float64 {
 			return a + b
 		},
@@ -48,7 +58,21 @@ func main() {
 			}
 			return a / b
 		},
+		// Time functions
 		"now": time.Now,
+		"formatDate": func(t time.Time) string {
+			return t.Format("2006-01-02")
+		},
+		// Money formatting
+		"formatMoney": func(amount float64) string {
+			return fmt.Sprintf("$%.2f", amount)
+		},
+		// Translation function
+		"t": func(lang, key string) string {
+			return i18nManager.Translate(lang, key)
+		},
+		// String manipulation
+		"lower": strings.ToLower,
 	}
 
 	// Parse templates with functions
@@ -77,8 +101,12 @@ func main() {
 	mux.HandleFunc("/admin/download-expenses", h.HandleDownloadExpenses)
 	mux.HandleFunc("/admin/upload-expenses", h.HandleUploadExpenses)
 
-	// Wrap the mux with security headers middleware
-	handler := middleware.SecurityHeaders(mux)
+	// Wrap the mux with middleware
+	handler := middleware.Chain(
+		mux,
+		middleware.SecurityHeaders,
+		middleware.I18n(i18nManager),
+	)
 
 	log.Println("Server starting at http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", handler))

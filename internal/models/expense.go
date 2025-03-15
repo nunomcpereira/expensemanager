@@ -2,13 +2,28 @@ package models
 
 import "time"
 
+// Expense represents a single expense entry
 type Expense struct {
 	ID          int64
 	Amount      float64
-	Description string
 	Category    string
+	Description string
 	Date        time.Time
 	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
+// Categories returns a list of valid expense categories
+func Categories() []string {
+	return []string{
+		"food",
+		"transportation",
+		"entertainment",
+		"shopping",
+		"bills",
+		"health",
+		"other",
+	}
 }
 
 type Analytics struct {

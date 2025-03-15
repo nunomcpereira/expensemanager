@@ -1,0 +1,50 @@
+{
+    "app.title": "Gestor de Despesas",
+    
+    "navigation.reports": "Relatórios",
+    "navigation.settings": "Configurações",
+    "navigation.previous": "Anterior",
+    "navigation.next": "Próximo",
+    
+    "expenses.add": "Adicionar",
+    "expenses.add_expense": "Nova Despesa",
+    "expenses.add_button": "Adicionar Despesa",
+    "expenses.amount": "Valor",
+    "expenses.category": "Categoria",
+    "expenses.description": "Descrição",
+    "expenses.date": "Data",
+    "expenses.actions": "Ações",
+    "expenses.delete": "Excluir",
+    "expenses.delete_confirm": "Tem certeza que deseja excluir esta despesa?",
+    "expenses.running_total": "Total Acumulado",
+    "expenses.no_expenses": "Nenhuma despesa encontrada para este mês",
+    "expenses.add_first": "Adicione sua primeira despesa usando o formulário",
+    
+    "categories.food": "Alimentação",
+    "categories.transportation": "Transporte",
+    "categories.entertainment": "Entretenimento",
+    "categories.shopping": "Compras",
+    "categories.bills": "Contas",
+    "categories.health": "Saúde",
+    "categories.other": "Outros",
+    
+    "summary.monthly_total": "Total do Mês",
+    "summary.daily_average": "Média por Dia",
+    "summary.categories_used": "Categorias Este Mês",
+    "summary.this_month": "Este Mês",
+    "summary.per_day": "Por Dia",
+    "summary.vs_yesterday": "vs Ontem",
+    "summary.month_progress": "do mês decorrido",
+    
+    "reports.title": "Relatórios de Despesas",
+    "reports.back_to_expenses": "Voltar para Despesas",
+    "reports.monthly_comparison": "Comparação Mensal",
+    "reports.category_distribution": "Distribuição por Categoria",
+    "reports.category": "Categoria",
+    "reports.total": "Total",
+    "reports.percentage": "Porcentagem",
+    "reports.monthly_total": "Total Mensal",
+    "reports.total_spent": "Total Gasto",
+    
+    "currency.symbol": "R$"
+} 

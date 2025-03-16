@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -14,7 +15,7 @@ import (
 	"expensemanager/internal/i18n"
 	"expensemanager/internal/middleware"
 
-	_ "github.com/mattn/go-sqlite3" // SQLite driver
+	_ "github.com/lib/pq" // PostgreSQL driver
 )
 
 //go:embed templates/*
@@ -24,8 +25,40 @@ var templatesFS embed.FS
 var staticFS embed.FS
 
 func main() {
+	// Build PostgreSQL connection string from environment variables
+	dbHost := os.Getenv("DB_HOST")
+	if dbHost == "" {
+		dbHost = "localhost"
+	}
+	dbPort := os.Getenv("DB_PORT")
+	if dbPort == "" {
+		dbPort = "5432"
+	}
+	dbUser := os.Getenv("DB_USER")
+	if dbUser == "" {
+		dbUser = "postgres"
+	}
+	dbPassword := os.Getenv("DB_PASSWORD")
+	if dbPassword == "" {
+		dbPassword = "postgres"
+	}
+	dbName := os.Getenv("DB_NAME")
+	if dbName == "" {
+		dbName = "expensemanager"
+	}
+	dbSSLMode := os.Getenv("DB_SSLMODE")
+	if dbSSLMode == "" {
+		dbSSLMode = "disable"
+	}
+
+	// Format PostgreSQL connection string
+	connStr := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		dbHost, dbPort, dbUser, dbPassword, dbName, dbSSLMode,
+	)
+
 	// Initialize database
-	db, err := database.NewDB("./db/expenses.db")
+	db, err := database.NewDB(connStr)
 	if err != nil {
 		log.Fatal(err)
 	}

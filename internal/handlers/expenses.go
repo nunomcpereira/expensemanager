@@ -78,7 +78,8 @@ func (h *Handler) HandleIndex(w http.ResponseWriter, r *http.Request) {
 	data.MonthProgress = (daysPassed / daysInMonth) * 100
 
 	// Get expenses for current month
-	expenses, err := h.db.GetExpensesForMonth(currentMonth.Format("2006-01"))
+	year, month := currentMonth.Year(), int(currentMonth.Month())
+	expenses, err := h.db.GetExpensesByMonth(year, month)
 	if err != nil {
 		http.Error(w, "Failed to retrieve expenses", http.StatusInternalServerError)
 		log.Println("Error fetching expenses:", err)
@@ -124,7 +125,15 @@ func (h *Handler) HandleExpenses(w http.ResponseWriter, r *http.Request) {
 		selectedMonth = time.Now().Format("2006-01")
 	}
 
-	expenses, err := h.db.GetExpensesForMonth(selectedMonth)
+	// Parse the selected month
+	monthDate, err := time.Parse("2006-01", selectedMonth)
+	if err != nil {
+		http.Error(w, "Invalid month format", http.StatusBadRequest)
+		return
+	}
+
+	year, month := monthDate.Year(), int(monthDate.Month())
+	expenses, err := h.db.GetExpensesByMonth(year, month)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -155,25 +164,31 @@ func (h *Handler) HandleAddExpense(w http.ResponseWriter, r *http.Request) {
 
 	description := r.FormValue("description")
 	category := r.FormValue("category")
-	date := r.FormValue("date")
+	dateStr := r.FormValue("date")
 
-	if err := h.db.AddExpense(amount, description, category, date); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Parse the expense date to get the month we should display
-	expenseDate, err := time.Parse("2006-01-02", date)
+	// Parse the date
+	date, err := time.Parse("2006-01-02", dateStr)
 	if err != nil {
 		http.Error(w, "Invalid date format", http.StatusBadRequest)
 		return
 	}
 
-	// Use the month from the expense date
-	monthToShow := expenseDate.Format("2006-01")
+	// Create expense model
+	expense := &models.Expense{
+		Amount:      amount,
+		Description: description,
+		Category:    category,
+		Date:        date,
+	}
 
-	// Get expenses for that month
-	expenses, err := h.db.GetExpensesForMonth(monthToShow)
+	if err := h.db.AddExpense(expense); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Get the month from the expense date
+	year, month := date.Year(), int(date.Month())
+	expenses, err := h.db.GetExpensesByMonth(year, month)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -197,7 +212,13 @@ func (h *Handler) HandleDeleteExpense(w http.ResponseWriter, r *http.Request) {
 	// Get base template data
 	data := h.GetTemplateData(r)
 
-	id := r.URL.Query().Get("id")
+	// Parse the ID as int64
+	id, err := strconv.ParseInt(r.URL.Query().Get("id"), 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid expense ID", http.StatusBadRequest)
+		return
+	}
+
 	if err := h.db.DeleteExpense(id); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -209,8 +230,15 @@ func (h *Handler) HandleDeleteExpense(w http.ResponseWriter, r *http.Request) {
 		selectedMonth = time.Now().Format("2006-01")
 	}
 
-	// Get expenses for the selected month
-	expenses, err := h.db.GetExpensesForMonth(selectedMonth)
+	// Parse the selected month
+	monthDate, err := time.Parse("2006-01", selectedMonth)
+	if err != nil {
+		http.Error(w, "Invalid month format", http.StatusBadRequest)
+		return
+	}
+
+	year, month := monthDate.Year(), int(monthDate.Month())
+	expenses, err := h.db.GetExpensesByMonth(year, month)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -250,7 +278,7 @@ func (h *Handler) HandleSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get expenses for the selected month
-	expenses, err := h.db.GetExpensesForMonth(selectedMonth)
+	expenses, err := h.db.GetExpensesByMonth(monthDate.Year(), int(monthDate.Month()))
 	if err != nil {
 		http.Error(w, "Failed to get expenses", http.StatusInternalServerError)
 		return

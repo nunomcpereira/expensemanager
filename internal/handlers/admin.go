@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"expensemanager/internal/models"
 )
@@ -115,27 +116,42 @@ func (h *Handler) HandleUploadExpenses(w http.ResponseWriter, r *http.Request) {
 
 	// Validate and insert each expense
 	var errors []string
-	for i, expense := range uploadData.Expenses {
+	for i, expenseData := range uploadData.Expenses {
 		// Validate required fields
-		if expense.Amount <= 0 {
+		if expenseData.Amount <= 0 {
 			errors = append(errors, fmt.Sprintf("Expense %d: Amount must be greater than 0", i+1))
 			continue
 		}
-		if strings.TrimSpace(expense.Description) == "" {
+		if strings.TrimSpace(expenseData.Description) == "" {
 			errors = append(errors, fmt.Sprintf("Expense %d: Description is required", i+1))
 			continue
 		}
-		if strings.TrimSpace(expense.Category) == "" {
+		if strings.TrimSpace(expenseData.Category) == "" {
 			errors = append(errors, fmt.Sprintf("Expense %d: Category is required", i+1))
 			continue
 		}
-		if strings.TrimSpace(expense.Date) == "" {
+		if strings.TrimSpace(expenseData.Date) == "" {
 			errors = append(errors, fmt.Sprintf("Expense %d: Date is required", i+1))
 			continue
 		}
 
+		// Parse the date
+		date, err := time.Parse("2006-01-02", expenseData.Date)
+		if err != nil {
+			errors = append(errors, fmt.Sprintf("Expense %d: Invalid date format", i+1))
+			continue
+		}
+
+		// Create expense model
+		expense := &models.Expense{
+			Amount:      expenseData.Amount,
+			Description: expenseData.Description,
+			Category:    expenseData.Category,
+			Date:        date,
+		}
+
 		// Insert the expense
-		if err := h.db.AddExpense(expense.Amount, expense.Description, expense.Category, expense.Date); err != nil {
+		if err := h.db.AddExpense(expense); err != nil {
 			errors = append(errors, fmt.Sprintf("Expense %d: Failed to insert: %v", i+1, err))
 			continue
 		}

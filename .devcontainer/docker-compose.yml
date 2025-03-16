@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Update USER_UID/USER_GID if needed
+        USER_UID: 1000
+        USER_GID: 1000
+    volumes:
+      - ..:/workspace:cached
+      - go-deps:/go
+    command: sleep infinity
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=expensemanager
+      - DB_SSLMODE=disable
+      - GOPATH=/go
+      - PATH=/go/bin:${PATH}
+    networks:
+      - expensemanager
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: expensemanager
+    networks:
+      - expensemanager
+
+volumes:
+  postgres-data:
+  go-deps:
+
+networks:
+  expensemanager:
+    driver: bridge 

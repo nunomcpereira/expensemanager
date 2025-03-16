@@ -2,9 +2,11 @@ package database
 
 import (
 	"database/sql"
-	"strings"
+	"time"
 
 	"expensemanager/internal/models"
+
+	_ "github.com/lib/pq"
 )
 
 type DB struct {
@@ -12,7 +14,7 @@ type DB struct {
 }
 
 func NewDB(dataSourceName string) (*DB, error) {
-	db, err := sql.Open("sqlite3", dataSourceName)
+	db, err := sql.Open("postgres", dataSourceName)
 	if err != nil {
 		return nil, err
 	}
@@ -27,12 +29,13 @@ func NewDB(dataSourceName string) (*DB, error) {
 func (db *DB) Initialize() error {
 	_, err := db.Exec(`
 		CREATE TABLE IF NOT EXISTS expenses (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			amount REAL NOT NULL,
+			id SERIAL PRIMARY KEY,
+			amount DECIMAL(10,2) NOT NULL,
 			description TEXT NOT NULL,
 			category TEXT NOT NULL,
 			date DATE NOT NULL,
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		)
 	`)
 	return err
@@ -40,7 +43,7 @@ func (db *DB) Initialize() error {
 
 func (db *DB) GetExpenses() ([]models.Expense, error) {
 	rows, err := db.Query(`
-		SELECT id, amount, description, category, date, created_at 
+		SELECT id, amount, description, category, date, created_at, updated_at
 		FROM expenses 
 		ORDER BY date DESC
 	`)
@@ -52,13 +55,89 @@ func (db *DB) GetExpenses() ([]models.Expense, error) {
 	var expenses []models.Expense
 	for rows.Next() {
 		var e models.Expense
-		err := rows.Scan(&e.ID, &e.Amount, &e.Description, &e.Category, &e.Date, &e.CreatedAt)
+		err := rows.Scan(
+			&e.ID,
+			&e.Amount,
+			&e.Description,
+			&e.Category,
+			&e.Date,
+			&e.CreatedAt,
+			&e.UpdatedAt,
+		)
 		if err != nil {
 			return nil, err
 		}
 		expenses = append(expenses, e)
 	}
 	return expenses, nil
+}
+
+func (db *DB) GetExpensesByMonth(year int, month int) ([]models.Expense, error) {
+	rows, err := db.Query(`
+		SELECT id, amount, description, category, date, created_at, updated_at
+		FROM expenses 
+		WHERE EXTRACT(YEAR FROM date) = $1 
+		AND EXTRACT(MONTH FROM date) = $2
+		ORDER BY date DESC
+	`, year, month)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var expenses []models.Expense
+	for rows.Next() {
+		var e models.Expense
+		err := rows.Scan(
+			&e.ID,
+			&e.Amount,
+			&e.Description,
+			&e.Category,
+			&e.Date,
+			&e.CreatedAt,
+			&e.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		expenses = append(expenses, e)
+	}
+	return expenses, nil
+}
+
+func (db *DB) AddExpense(e *models.Expense) error {
+	now := time.Now()
+	err := db.QueryRow(`
+		INSERT INTO expenses (amount, description, category, date, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id
+	`, e.Amount, e.Description, e.Category, e.Date, now, now).Scan(&e.ID)
+
+	if err != nil {
+		return err
+	}
+
+	e.CreatedAt = now
+	e.UpdatedAt = now
+	return nil
+}
+
+func (db *DB) DeleteExpense(id int64) error {
+	result, err := db.Exec("DELETE FROM expenses WHERE id = $1", id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
 }
 
 func (db *DB) GetAnalytics() (models.Analytics, error) {
@@ -99,12 +178,12 @@ func (db *DB) GetAnalytics() (models.Analytics, error) {
 	// Get monthly totals for the last 12 months
 	rows, err = db.Query(`
 		SELECT 
-			strftime('%Y-%m', date) as month,
+			TO_CHAR(date, 'YYYY-MM') as month,
 			COALESCE(SUM(amount), 0) as total
 		FROM expenses
-		WHERE date >= date('now', '-12 months')
+		WHERE date >= NOW() - INTERVAL '1 year'
 		GROUP BY month
-		ORDER BY month ASC
+		ORDER BY month DESC
 	`)
 	if err != nil {
 		return analytics, err
@@ -112,11 +191,11 @@ func (db *DB) GetAnalytics() (models.Analytics, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var monthTotal models.MonthlyTotal
-		if err := rows.Scan(&monthTotal.Month, &monthTotal.Total); err != nil {
+		var mt models.MonthlyTotal
+		if err := rows.Scan(&mt.Month, &mt.Total); err != nil {
 			return analytics, err
 		}
-		analytics.MonthlyTotals = append(analytics.MonthlyTotals, monthTotal)
+		analytics.MonthlyTotals = append(analytics.MonthlyTotals, mt)
 	}
 
 	// Calculate monthly average
@@ -127,48 +206,7 @@ func (db *DB) GetAnalytics() (models.Analytics, error) {
 	return analytics, nil
 }
 
-func (db *DB) AddExpense(amount float64, description, category, date string) error {
-	// Convert category to lowercase
-	category = strings.ToLower(category)
-
-	_, err := db.Exec(`
-		INSERT INTO expenses (amount, description, category, date)
-		VALUES (?, ?, ?, ?)
-	`, amount, description, category, date)
-	return err
-}
-
-func (db *DB) DeleteExpense(id string) error {
-	_, err := db.Exec("DELETE FROM expenses WHERE id = ?", id)
-	return err
-}
-
 func (db *DB) ClearExpenses() error {
 	_, err := db.Exec("DELETE FROM expenses")
 	return err
-}
-
-func (db *DB) GetExpensesForMonth(month string) ([]models.Expense, error) {
-	query := `
-		SELECT id, amount, description, category, date, created_at 
-		FROM expenses 
-		WHERE strftime('%Y-%m', date) = ?
-		ORDER BY date DESC
-	`
-	rows, err := db.Query(query, month)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var expenses []models.Expense
-	for rows.Next() {
-		var e models.Expense
-		err := rows.Scan(&e.ID, &e.Amount, &e.Description, &e.Category, &e.Date, &e.CreatedAt)
-		if err != nil {
-			return nil, err
-		}
-		expenses = append(expenses, e)
-	}
-	return expenses, nil
 }

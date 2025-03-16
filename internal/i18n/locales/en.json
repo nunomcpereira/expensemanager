@@ -6,6 +6,8 @@
     "navigation.previous": "Previous",
     "navigation.next": "Next",
     "navigation.back_to_dashboard": "Back to Dashboard",
+    "navigation.admin": "Admin",
+    "navigation.logout": "Logout",
     
     "expenses.add": "Add",
     "expenses.add_expense": "Add New Expense",
@@ -28,6 +30,11 @@
     "categories.bills": "Bills",
     "categories.health": "Health",
     "categories.other": "Other",
+    "categories.housing": "Housing",
+    "categories.utilities": "Utilities",
+    "categories.healthcare": "Healthcare",
+    "categories.education": "Education",
+    "categories.travel": "Travel",
     
     "summary.monthly_total": "Total for Month",
     "summary.daily_average": "Average per Day",
@@ -36,6 +43,9 @@
     "summary.per_day": "Per Day",
     "summary.vs_yesterday": "vs Yesterday",
     "summary.month_progress": "of month passed",
+    "summary.month_total": "Month Total",
+    "summary.daily_trend": "Daily Trend",
+    "summary.category_distribution": "Category Distribution",
     
     "reports.title": "Expense Reports",
     "reports.back_to_expenses": "Back to Expenses",
@@ -50,6 +60,8 @@
     "reports.monthly_average": "Monthly Average",
     "reports.monthly_trend": "Monthly Spending Trend",
     "reports.category_breakdown": "Category Breakdown",
+    "reports.monthly_totals": "Monthly Totals",
+    "reports.category_totals": "Category Totals",
     
     "admin.title": "Admin Panel",
     "admin.upload_expenses": "Upload Expenses",
@@ -64,6 +76,35 @@
     "admin.download_expenses": "Download Expenses",
     "admin.download_instructions": "Download all expenses as a JSON file for backup or analysis purposes.",
     "admin.download_button": "Download Expenses",
+    "admin.clear_confirm": "Are you sure you want to clear all expenses? This action cannot be undone.",
     
-    "currency.symbol": "$"
+    "currency.symbol": "$",
+
+    "languages.en": "English",
+    "languages.pt": "Portuguese",
+
+    "auth.login.title": "Login",
+    "auth.login.welcome": "Welcome Back!",
+    "auth.login.subtitle": "Sign in to manage your expenses",
+    "auth.login.button": "Sign In",
+    "auth.login.no_account": "Don't have an account?",
+    "auth.login.register_link": "Register now",
+
+    "auth.register.title": "Register",
+    "auth.register.welcome": "Create Account",
+    "auth.register.subtitle": "Start managing your expenses today",
+    "auth.register.button": "Create Account",
+    "auth.register.have_account": "Already have an account?",
+    "auth.register.login_link": "Sign in",
+
+    "auth.name": "Name",
+    "auth.email": "Email",
+    "auth.password": "Password",
+    "auth.confirm_password": "Confirm Password",
+    "auth.name_placeholder": "Enter your name",
+    "auth.email_placeholder": "Enter your email",
+    "auth.password_placeholder": "Enter your password",
+    "auth.confirm_password_placeholder": "Confirm your password",
+
+    "navigation.home": "Home"
 } 

@@ -10,18 +10,22 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/gorilla/sessions"
 )
 
 type Handler struct {
-	db   *database.DB
-	tmpl *template.Template
-	i18n *i18n.Manager
+	db    *database.DB
+	tmpl  *template.Template
+	i18n  *i18n.Manager
+	store sessions.Store
 }
 
-func NewHandler(db *database.DB, tmpl *template.Template) *Handler {
+func NewHandler(db *database.DB, tmpl *template.Template, store sessions.Store) *Handler {
 	return &Handler{
-		db:   db,
-		tmpl: tmpl,
+		db:    db,
+		tmpl:  tmpl,
+		store: store,
 	}
 }
 
@@ -46,6 +50,10 @@ type TemplateData struct {
 	Success            string
 	MonthProgress      float64
 	DailyTrend         float64
+	// User information
+	UserID    int64
+	UserName  string
+	UserEmail string
 	// Analytics fields
 	TotalSpent     float64
 	MonthlyTotals  []models.MonthlyTotal
@@ -55,14 +63,37 @@ type TemplateData struct {
 // GetTemplateData prepares common template data
 func (h *Handler) GetTemplateData(r *http.Request) *TemplateData {
 	lang := i18n.GetLang(r.Context())
-	return &TemplateData{
+	data := &TemplateData{
 		Lang:               lang,
 		AvailableLanguages: h.i18n.GetAvailableLanguages(),
 		Categories:         models.Categories(),
 	}
+
+	// Get user information from session
+	session, _ := h.store.Get(r, "session")
+	if userID, ok := session.Values["user_id"].(int64); ok {
+		data.UserID = userID
+	}
+	if userName, ok := session.Values["user_name"].(string); ok {
+		data.UserName = userName
+	}
+	if userEmail, ok := session.Values["user_email"].(string); ok {
+		data.UserEmail = userEmail
+	}
+
+	return data
 }
 
 func (h *Handler) HandleIndex(w http.ResponseWriter, r *http.Request) {
+	// Get user ID from context
+	userID, ok := GetUserIDFromContext(r.Context())
+	if !ok {
+		log.Printf("No user ID found in context")
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	log.Printf("Handling index for user ID: %d", userID)
+
 	// Get base template data
 	data := h.GetTemplateData(r)
 
@@ -79,12 +110,14 @@ func (h *Handler) HandleIndex(w http.ResponseWriter, r *http.Request) {
 
 	// Get expenses for current month
 	year, month := currentMonth.Year(), int(currentMonth.Month())
-	expenses, err := h.db.GetExpensesByMonth(year, month)
+	log.Printf("Fetching expenses for user %d, year %d, month %d", userID, year, month)
+	expenses, err := h.db.GetExpensesByMonth(userID, year, month)
 	if err != nil {
+		log.Printf("Error fetching expenses for user %d: %v", userID, err)
 		http.Error(w, "Failed to retrieve expenses", http.StatusInternalServerError)
-		log.Println("Error fetching expenses:", err)
 		return
 	}
+	log.Printf("Found %d expenses for user %d", len(expenses), userID)
 	data.Expenses = expenses
 
 	// Calculate summary statistics
@@ -106,8 +139,8 @@ func (h *Handler) HandleIndex(w http.ResponseWriter, r *http.Request) {
 	// Buffer the template output before writing to ResponseWriter
 	var buf bytes.Buffer
 	if err := h.tmpl.ExecuteTemplate(&buf, "index.html", data); err != nil {
+		log.Printf("Template execution error for user %d: %v", userID, err)
 		http.Error(w, "Error rendering page", http.StatusInternalServerError)
-		log.Println("Template execution error:", err)
 		return
 	}
 
@@ -117,6 +150,9 @@ func (h *Handler) HandleIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) HandleExpenses(w http.ResponseWriter, r *http.Request) {
+	// Get user ID from context
+	userID, _ := GetUserIDFromContext(r.Context())
+
 	// Get base template data
 	data := h.GetTemplateData(r)
 
@@ -133,7 +169,7 @@ func (h *Handler) HandleExpenses(w http.ResponseWriter, r *http.Request) {
 	}
 
 	year, month := monthDate.Year(), int(monthDate.Month())
-	expenses, err := h.db.GetExpensesByMonth(year, month)
+	expenses, err := h.db.GetExpensesByMonth(userID, year, month)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -152,6 +188,9 @@ func (h *Handler) HandleAddExpense(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
+	// Get user ID from context
+	userID, _ := GetUserIDFromContext(r.Context())
 
 	// Get base template data
 	data := h.GetTemplateData(r)
@@ -175,6 +214,7 @@ func (h *Handler) HandleAddExpense(w http.ResponseWriter, r *http.Request) {
 
 	// Create expense model
 	expense := &models.Expense{
+		UserID:      userID,
 		Amount:      amount,
 		Description: description,
 		Category:    category,
@@ -188,7 +228,7 @@ func (h *Handler) HandleAddExpense(w http.ResponseWriter, r *http.Request) {
 
 	// Get the month from the expense date
 	year, month := date.Year(), int(date.Month())
-	expenses, err := h.db.GetExpensesByMonth(year, month)
+	expenses, err := h.db.GetExpensesByMonth(userID, year, month)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -209,17 +249,20 @@ func (h *Handler) HandleDeleteExpense(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get user ID from context
+	userID, _ := GetUserIDFromContext(r.Context())
+
 	// Get base template data
 	data := h.GetTemplateData(r)
 
 	// Parse the ID as int64
-	id, err := strconv.ParseInt(r.URL.Query().Get("id"), 10, 64)
+	expenseID, err := strconv.ParseInt(r.URL.Query().Get("id"), 10, 64)
 	if err != nil {
 		http.Error(w, "Invalid expense ID", http.StatusBadRequest)
 		return
 	}
 
-	if err := h.db.DeleteExpense(id); err != nil {
+	if err := h.db.DeleteExpense(userID, expenseID); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -238,7 +281,7 @@ func (h *Handler) HandleDeleteExpense(w http.ResponseWriter, r *http.Request) {
 	}
 
 	year, month := monthDate.Year(), int(monthDate.Month())
-	expenses, err := h.db.GetExpensesByMonth(year, month)
+	expenses, err := h.db.GetExpensesByMonth(userID, year, month)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -254,6 +297,9 @@ func (h *Handler) HandleDeleteExpense(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) HandleSummary(w http.ResponseWriter, r *http.Request) {
+	// Get user ID from context
+	userID, _ := GetUserIDFromContext(r.Context())
+
 	// Get base template data
 	data := h.GetTemplateData(r)
 
@@ -278,7 +324,7 @@ func (h *Handler) HandleSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get expenses for the selected month
-	expenses, err := h.db.GetExpensesByMonth(monthDate.Year(), int(monthDate.Month()))
+	expenses, err := h.db.GetExpensesByMonth(userID, monthDate.Year(), int(monthDate.Month()))
 	if err != nil {
 		http.Error(w, "Failed to get expenses", http.StatusInternalServerError)
 		return

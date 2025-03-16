@@ -2,11 +2,13 @@ package database
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 
 	"expensemanager/internal/models"
 
 	_ "github.com/lib/pq"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type DB struct {
@@ -27,9 +29,32 @@ func NewDB(dataSourceName string) (*DB, error) {
 }
 
 func (db *DB) Initialize() error {
+	// Create users table
 	_, err := db.Exec(`
-		CREATE TABLE IF NOT EXISTS expenses (
+		CREATE TABLE IF NOT EXISTS users (
 			id SERIAL PRIMARY KEY,
+			email TEXT UNIQUE NOT NULL,
+			password TEXT NOT NULL,
+			name TEXT NOT NULL,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		)
+	`)
+	if err != nil {
+		return err
+	}
+
+	// Drop existing expenses table if it exists
+	_, err = db.Exec(`DROP TABLE IF EXISTS expenses`)
+	if err != nil {
+		return err
+	}
+
+	// Create expenses table with user_id foreign key
+	_, err = db.Exec(`
+		CREATE TABLE expenses (
+			id SERIAL PRIMARY KEY,
+			user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 			amount DECIMAL(10,2) NOT NULL,
 			description TEXT NOT NULL,
 			category TEXT NOT NULL,
@@ -41,12 +66,78 @@ func (db *DB) Initialize() error {
 	return err
 }
 
-func (db *DB) GetExpenses() ([]models.Expense, error) {
+// User-related functions
+func (db *DB) CreateUser(user *models.User, password string) error {
+	// Hash the password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	now := time.Now()
+	err = db.QueryRow(`
+		INSERT INTO users (email, password, name, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $4)
+		RETURNING id
+	`, user.Email, string(hashedPassword), user.Name, now).Scan(&user.ID)
+
+	if err != nil {
+		return err
+	}
+
+	user.CreatedAt = now
+	user.UpdatedAt = now
+	return nil
+}
+
+func (db *DB) GetUserByEmail(email string) (*models.User, error) {
+	user := &models.User{}
+	err := db.QueryRow(`
+		SELECT id, email, password, name, created_at, updated_at
+		FROM users
+		WHERE email = $1
+	`, email).Scan(
+		&user.ID,
+		&user.Email,
+		&user.Password,
+		&user.Name,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func (db *DB) AuthenticateUser(email, password string) (*models.User, error) {
+	user, err := db.GetUserByEmail(email)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, errors.New("user not found")
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil {
+		return nil, errors.New("invalid password")
+	}
+
+	return user, nil
+}
+
+// Update expense-related functions to include user_id
+func (db *DB) GetExpenses(userID int64) ([]models.Expense, error) {
 	rows, err := db.Query(`
-		SELECT id, amount, description, category, date, created_at, updated_at
+		SELECT id, user_id, amount, description, category, date, created_at, updated_at
 		FROM expenses 
+		WHERE user_id = $1
 		ORDER BY date DESC
-	`)
+	`, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -57,6 +148,7 @@ func (db *DB) GetExpenses() ([]models.Expense, error) {
 		var e models.Expense
 		err := rows.Scan(
 			&e.ID,
+			&e.UserID,
 			&e.Amount,
 			&e.Description,
 			&e.Category,
@@ -72,14 +164,15 @@ func (db *DB) GetExpenses() ([]models.Expense, error) {
 	return expenses, nil
 }
 
-func (db *DB) GetExpensesByMonth(year int, month int) ([]models.Expense, error) {
+func (db *DB) GetExpensesByMonth(userID int64, year int, month int) ([]models.Expense, error) {
 	rows, err := db.Query(`
-		SELECT id, amount, description, category, date, created_at, updated_at
+		SELECT id, user_id, amount, description, category, date, created_at, updated_at
 		FROM expenses 
-		WHERE EXTRACT(YEAR FROM date) = $1 
-		AND EXTRACT(MONTH FROM date) = $2
+		WHERE user_id = $1
+		AND EXTRACT(YEAR FROM date) = $2 
+		AND EXTRACT(MONTH FROM date) = $3
 		ORDER BY date DESC
-	`, year, month)
+	`, userID, year, month)
 	if err != nil {
 		return nil, err
 	}
@@ -90,6 +183,7 @@ func (db *DB) GetExpensesByMonth(year int, month int) ([]models.Expense, error) 
 		var e models.Expense
 		err := rows.Scan(
 			&e.ID,
+			&e.UserID,
 			&e.Amount,
 			&e.Description,
 			&e.Category,
@@ -108,10 +202,10 @@ func (db *DB) GetExpensesByMonth(year int, month int) ([]models.Expense, error) 
 func (db *DB) AddExpense(e *models.Expense) error {
 	now := time.Now()
 	err := db.QueryRow(`
-		INSERT INTO expenses (amount, description, category, date, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO expenses (user_id, amount, description, category, date, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $6)
 		RETURNING id
-	`, e.Amount, e.Description, e.Category, e.Date, now, now).Scan(&e.ID)
+	`, e.UserID, e.Amount, e.Description, e.Category, e.Date, now).Scan(&e.ID)
 
 	if err != nil {
 		return err
@@ -122,8 +216,8 @@ func (db *DB) AddExpense(e *models.Expense) error {
 	return nil
 }
 
-func (db *DB) DeleteExpense(id int64) error {
-	result, err := db.Exec("DELETE FROM expenses WHERE id = $1", id)
+func (db *DB) DeleteExpense(userID, expenseID int64) error {
+	result, err := db.Exec("DELETE FROM expenses WHERE id = $1 AND user_id = $2", expenseID, userID)
 	if err != nil {
 		return err
 	}
@@ -140,7 +234,7 @@ func (db *DB) DeleteExpense(id int64) error {
 	return nil
 }
 
-func (db *DB) GetAnalytics() (models.Analytics, error) {
+func (db *DB) GetAnalytics(userID int64) (models.Analytics, error) {
 	analytics := models.Analytics{
 		CategoryTotals: make(map[string]float64),
 		MonthlyTotals:  make([]models.MonthlyTotal, 0),
@@ -149,7 +243,7 @@ func (db *DB) GetAnalytics() (models.Analytics, error) {
 	}
 
 	// Get total spent
-	err := db.QueryRow("SELECT COALESCE(SUM(amount), 0) FROM expenses").Scan(&analytics.TotalSpent)
+	err := db.QueryRow("SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE user_id = $1", userID).Scan(&analytics.TotalSpent)
 	if err != nil {
 		return analytics, err
 	}
@@ -158,9 +252,10 @@ func (db *DB) GetAnalytics() (models.Analytics, error) {
 	rows, err := db.Query(`
 		SELECT category, COALESCE(SUM(amount), 0) as total
 		FROM expenses
+		WHERE user_id = $1
 		GROUP BY category
 		ORDER BY total DESC
-	`)
+	`, userID)
 	if err != nil {
 		return analytics, err
 	}
@@ -181,10 +276,11 @@ func (db *DB) GetAnalytics() (models.Analytics, error) {
 			TO_CHAR(date, 'YYYY-MM') as month,
 			COALESCE(SUM(amount), 0) as total
 		FROM expenses
-		WHERE date >= NOW() - INTERVAL '1 year'
+		WHERE user_id = $1
+		AND date >= NOW() - INTERVAL '1 year'
 		GROUP BY month
 		ORDER BY month DESC
-	`)
+	`, userID)
 	if err != nil {
 		return analytics, err
 	}
@@ -206,7 +302,7 @@ func (db *DB) GetAnalytics() (models.Analytics, error) {
 	return analytics, nil
 }
 
-func (db *DB) ClearExpenses() error {
-	_, err := db.Exec("DELETE FROM expenses")
+func (db *DB) ClearExpenses(userID int64) error {
+	_, err := db.Exec("DELETE FROM expenses WHERE user_id = $1", userID)
 	return err
 }

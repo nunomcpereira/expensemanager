@@ -11,8 +11,21 @@ import (
 func WithI18n(manager *i18n.Manager) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Get language from query parameter or cookie
+			// Get language from query parameter, session, or cookie
 			lang := r.URL.Query().Get("lang")
+
+			// Check session if no query parameter
+			if lang == "" {
+				if store, ok := GetSessionStore(r.Context()); ok {
+					if session, err := store.Get(r, "session"); err == nil {
+						if sessionLang, ok := session.Values["lang"].(string); ok {
+							lang = sessionLang
+						}
+					}
+				}
+			}
+
+			// Check cookie if no session
 			if lang == "" {
 				if cookie, err := r.Cookie("lang"); err == nil {
 					lang = cookie.Value

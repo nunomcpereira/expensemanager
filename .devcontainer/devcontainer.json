@@ -41,7 +41,13 @@
     },
 
     "forwardPorts": [8080, 5432],
-    "postCreateCommand": "/usr/local/go/bin/go mod download",
+    
+    // Download dependencies and wait for database to be ready before starting the server
+    "postCreateCommand": "bash -c '/usr/local/go/bin/go mod download && sleep 5'",
+    
+    // Start the server in a new terminal and redirect output to a log file
+    "postStartCommand": "bash -c 'go run cmd/server/main.go > /workspace/server.log 2>&1 &'",
+    
     "remoteUser": "vscode",
 
     "remoteEnv": {

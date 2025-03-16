@@ -6,11 +6,14 @@ import (
 )
 
 func (h *Handler) HandleReports(w http.ResponseWriter, r *http.Request) {
+	// Get user ID from context
+	userID, _ := GetUserIDFromContext(r.Context())
+
 	// Get base template data
 	data := h.GetTemplateData(r)
 
 	// Get analytics data
-	analytics, err := h.db.GetAnalytics()
+	analytics, err := h.db.GetAnalytics(userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -29,7 +32,10 @@ func (h *Handler) HandleReports(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) HandleMonthlyTotals(w http.ResponseWriter, r *http.Request) {
-	analytics, err := h.db.GetAnalytics()
+	// Get user ID from context
+	userID, _ := GetUserIDFromContext(r.Context())
+
+	analytics, err := h.db.GetAnalytics(userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -40,7 +46,10 @@ func (h *Handler) HandleMonthlyTotals(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) HandleCategoryTotals(w http.ResponseWriter, r *http.Request) {
-	analytics, err := h.db.GetAnalytics()
+	// Get user ID from context
+	userID, _ := GetUserIDFromContext(r.Context())
+
+	analytics, err := h.db.GetAnalytics(userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

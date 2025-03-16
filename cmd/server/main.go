@@ -15,6 +15,7 @@ import (
 	"expensemanager/internal/i18n"
 	"expensemanager/internal/middleware"
 
+	"github.com/gorilla/sessions"
 	_ "github.com/lib/pq" // PostgreSQL driver
 )
 
@@ -68,9 +69,23 @@ func main() {
 	}
 
 	// Initialize i18n manager
+	log.Printf("Loading i18n translations...")
 	i18nManager := i18n.NewManager("en")
 	if err := i18nManager.LoadTranslations("internal/i18n/locales"); err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to load translations: %v", err)
+	}
+	log.Printf("Available languages: %v", i18nManager.GetAvailableLanguages())
+
+	// Initialize session store
+	sessionKey := os.Getenv("SESSION_KEY")
+	if sessionKey == "" {
+		sessionKey = "your-secret-key-change-me" // Change this in production
+	}
+	store := sessions.NewCookieStore([]byte(sessionKey))
+	store.Options = &sessions.Options{
+		Path:     "/",
+		MaxAge:   86400 * 7, // 7 days
+		HttpOnly: true,
 	}
 
 	// Template functions
@@ -122,11 +137,28 @@ func main() {
 	}
 
 	// Parse templates with functions
-	tmpl := template.Must(template.New("").Funcs(funcMap).ParseFS(templatesFS, "templates/*.html"))
+	log.Printf("Loading templates from embedded filesystem...")
+	templates, err := templatesFS.ReadDir("templates")
+	if err != nil {
+		log.Fatalf("Failed to read templates directory: %v", err)
+	}
+	for _, template := range templates {
+		log.Printf("Found template: %s", template.Name())
+	}
+
+	tmpl, err := template.New("").Funcs(funcMap).ParseFS(templatesFS, "templates/*.html")
+	if err != nil {
+		log.Fatalf("Failed to parse templates: %v", err)
+	}
+	log.Printf("Templates loaded successfully")
 
 	// Initialize handlers
-	h := handlers.NewHandler(db, tmpl)
+	h := handlers.NewHandler(db, tmpl, store)
 	h.UpdateI18n(i18nManager)
+
+	// Initialize auth handler
+	authHandler := handlers.NewAuthHandler(db, tmpl, store)
+	authHandler.UpdateI18n(i18nManager)
 
 	// Create a new mux for routing
 	mux := http.NewServeMux()
@@ -134,27 +166,41 @@ func main() {
 	// Serve static files
 	mux.Handle("/static/", http.FileServer(http.FS(staticFS)))
 
-	// Routes
-	mux.HandleFunc("/", h.HandleIndex)
-	mux.HandleFunc("/expenses", h.HandleExpenses)
-	mux.HandleFunc("/expenses/add", h.HandleAddExpense)
-	mux.HandleFunc("/expenses/delete", h.HandleDeleteExpense)
-	mux.HandleFunc("/summary", h.HandleSummary)
-	mux.HandleFunc("/reports", h.HandleReports)
-	mux.HandleFunc("/api/monthly-totals", h.HandleMonthlyTotals)
-	mux.HandleFunc("/api/category-totals", h.HandleCategoryTotals)
-	mux.HandleFunc("/admin", h.HandleAdmin)
-	mux.HandleFunc("/admin/clear-expenses", h.HandleClearExpenses)
-	mux.HandleFunc("/admin/download-expenses", h.HandleDownloadExpenses)
-	mux.HandleFunc("/admin/upload-expenses", h.HandleUploadExpenses)
+	// Auth routes
+	mux.HandleFunc("/login", authHandler.HandleLogin)
+	mux.HandleFunc("/register", authHandler.HandleRegister)
+	mux.HandleFunc("/logout", authHandler.HandleLogout)
+
+	// Protected routes
+	mux.HandleFunc("/", authHandler.RequireAuth(h.HandleIndex))
+	mux.HandleFunc("/expenses", authHandler.RequireAuth(h.HandleExpenses))
+	mux.HandleFunc("/expenses/add", authHandler.RequireAuth(h.HandleAddExpense))
+	mux.HandleFunc("/expenses/delete", authHandler.RequireAuth(h.HandleDeleteExpense))
+	mux.HandleFunc("/summary", authHandler.RequireAuth(h.HandleSummary))
+	mux.HandleFunc("/reports", authHandler.RequireAuth(h.HandleReports))
+	mux.HandleFunc("/api/monthly-totals", authHandler.RequireAuth(h.HandleMonthlyTotals))
+	mux.HandleFunc("/api/category-totals", authHandler.RequireAuth(h.HandleCategoryTotals))
+	mux.HandleFunc("/admin", authHandler.RequireAuth(h.HandleAdmin))
+	mux.HandleFunc("/admin/clear-expenses", authHandler.RequireAuth(h.HandleClearExpenses))
+	mux.HandleFunc("/admin/download-expenses", authHandler.RequireAuth(h.HandleDownloadExpenses))
+	mux.HandleFunc("/admin/upload-expenses", authHandler.RequireAuth(h.HandleUploadExpenses))
+
+	// Language route
+	mux.HandleFunc("/language", authHandler.HandleLanguage)
 
 	// Wrap the mux with middleware
-	handler := middleware.Chain(
-		mux,
-		middleware.SecurityHeaders,
-		middleware.WithI18n(i18nManager),
+	handler := middleware.Chain(mux,
+		middleware.Logger,
+		middleware.WithSessionStore(store),
+		middleware.I18n(i18nManager),
+		middleware.Recovery,
 	)
 
-	log.Println("Server starting at http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", handler))
+	// Start server
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	log.Printf("Server starting on port %s...\n", port)
+	log.Fatal(http.ListenAndServe(":"+port, handler))
 }

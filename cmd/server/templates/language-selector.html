@@ -2,7 +2,7 @@
 <div class="relative inline-block text-left">
     <select
         class="form-select rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm"
-        onchange="window.location.href='/?lang=' + this.value"
+        onchange="window.location.href='/language?lang=' + this.value"
         name="lang">
         {{ range .AvailableLanguages }}
             <option value="{{ . }}" {{ if eqs . $.Lang }}selected{{ end }}>

@@ -4,13 +4,14 @@ import "time"
 
 // Expense represents a single expense entry
 type Expense struct {
-	ID          int64
-	Amount      float64
-	Category    string
-	Description string
-	Date        time.Time
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID          int64     `json:"id"`
+	UserID      int64     `json:"user_id"`
+	Amount      float64   `json:"amount"`
+	Description string    `json:"description"`
+	Category    string    `json:"category"`
+	Date        time.Time `json:"date"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 // Categories returns a list of valid expense categories
@@ -18,10 +19,13 @@ func Categories() []string {
 	return []string{
 		"food",
 		"transportation",
+		"housing",
+		"utilities",
 		"entertainment",
+		"healthcare",
 		"shopping",
-		"bills",
-		"health",
+		"education",
+		"travel",
 		"other",
 	}
 }
@@ -40,6 +44,7 @@ type MonthlyTotal struct {
 
 type ExpenseJSON struct {
 	ID          int64   `json:"id"`
+	UserID      int64   `json:"user_id"`
 	Amount      float64 `json:"amount"`
 	Description string  `json:"description"`
 	Category    string  `json:"category"`

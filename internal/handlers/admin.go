@@ -32,12 +32,15 @@ func (h *Handler) HandleClearExpenses(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.db.ClearExpenses(); err != nil {
+	// Get user ID from context
+	userID, _ := GetUserIDFromContext(r.Context())
+
+	if err := h.db.ClearExpenses(userID); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	expenses, err := h.db.GetExpenses()
+	expenses, err := h.db.GetExpenses(userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -49,7 +52,10 @@ func (h *Handler) HandleClearExpenses(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) HandleDownloadExpenses(w http.ResponseWriter, r *http.Request) {
-	expenses, err := h.db.GetExpenses()
+	// Get user ID from context
+	userID, _ := GetUserIDFromContext(r.Context())
+
+	expenses, err := h.db.GetExpenses(userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -59,6 +65,7 @@ func (h *Handler) HandleDownloadExpenses(w http.ResponseWriter, r *http.Request)
 	for i, e := range expenses {
 		expensesJSON[i] = models.ExpenseJSON{
 			ID:          e.ID,
+			UserID:      e.UserID,
 			Amount:      e.Amount,
 			Description: e.Description,
 			Category:    e.Category,
@@ -78,97 +85,80 @@ func (h *Handler) HandleUploadExpenses(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse the multipart form
-	if err := r.ParseMultipartForm(10 << 20); err != nil {
-		sendJSONResponse(w, false, "Failed to parse form: "+err.Error())
+	// Get user ID from context
+	userID, _ := GetUserIDFromContext(r.Context())
+
+	// Parse multipart form
+	if err := r.ParseMultipartForm(10 << 20); err != nil { // 10 MB max
+		http.Error(w, "Failed to parse form", http.StatusBadRequest)
 		return
 	}
 
-	// Get the file from the form
+	// Get file from form
 	file, _, err := r.FormFile("file")
 	if err != nil {
-		sendJSONResponse(w, false, "Failed to get file: "+err.Error())
+		http.Error(w, "Failed to get file", http.StatusBadRequest)
 		return
 	}
 	defer file.Close()
 
-	// Read the file content
-	content, err := io.ReadAll(file)
+	// Read file contents
+	fileBytes, err := io.ReadAll(file)
 	if err != nil {
-		sendJSONResponse(w, false, "Failed to read file: "+err.Error())
+		http.Error(w, "Failed to read file", http.StatusInternalServerError)
 		return
 	}
 
-	// Parse the JSON content
-	var uploadData struct {
-		Expenses []struct {
-			Amount      float64 `json:"amount"`
-			Description string  `json:"description"`
-			Category    string  `json:"category"`
-			Date        string  `json:"date"`
-		} `json:"expenses"`
-	}
-
-	if err := json.Unmarshal(content, &uploadData); err != nil {
-		sendJSONResponse(w, false, "Invalid JSON format: "+err.Error())
+	// Parse JSON
+	var expenses []models.ExpenseJSON
+	if err := json.Unmarshal(fileBytes, &expenses); err != nil {
+		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
 		return
 	}
 
-	// Validate and insert each expense
-	var errors []string
-	for i, expenseData := range uploadData.Expenses {
-		// Validate required fields
-		if expenseData.Amount <= 0 {
-			errors = append(errors, fmt.Sprintf("Expense %d: Amount must be greater than 0", i+1))
-			continue
-		}
-		if strings.TrimSpace(expenseData.Description) == "" {
-			errors = append(errors, fmt.Sprintf("Expense %d: Description is required", i+1))
-			continue
-		}
-		if strings.TrimSpace(expenseData.Category) == "" {
-			errors = append(errors, fmt.Sprintf("Expense %d: Category is required", i+1))
-			continue
-		}
-		if strings.TrimSpace(expenseData.Date) == "" {
-			errors = append(errors, fmt.Sprintf("Expense %d: Date is required", i+1))
-			continue
-		}
-
-		// Parse the date
-		date, err := time.Parse("2006-01-02", expenseData.Date)
+	// Validate and add expenses
+	for _, e := range expenses {
+		// Parse date
+		date, err := time.Parse("2006-01-02", e.Date)
 		if err != nil {
-			errors = append(errors, fmt.Sprintf("Expense %d: Invalid date format", i+1))
-			continue
+			http.Error(w, fmt.Sprintf("Invalid date format for expense %d", e.ID), http.StatusBadRequest)
+			return
 		}
 
-		// Create expense model
+		// Validate category
+		validCategory := false
+		for _, cat := range models.Categories() {
+			if strings.EqualFold(e.Category, cat) {
+				validCategory = true
+				break
+			}
+		}
+		if !validCategory {
+			http.Error(w, fmt.Sprintf("Invalid category for expense %d", e.ID), http.StatusBadRequest)
+			return
+		}
+
+		// Create expense
 		expense := &models.Expense{
-			Amount:      expenseData.Amount,
-			Description: expenseData.Description,
-			Category:    expenseData.Category,
+			UserID:      userID,
+			Amount:      e.Amount,
+			Description: e.Description,
+			Category:    e.Category,
 			Date:        date,
 		}
 
-		// Insert the expense
 		if err := h.db.AddExpense(expense); err != nil {
-			errors = append(errors, fmt.Sprintf("Expense %d: Failed to insert: %v", i+1, err))
-			continue
+			http.Error(w, fmt.Sprintf("Failed to add expense %d", e.ID), http.StatusInternalServerError)
+			return
 		}
 	}
 
-	if len(errors) > 0 {
-		sendJSONResponse(w, false, "Some expenses failed to upload:\n"+strings.Join(errors, "\n"))
-		return
+	// Return success response
+	response := UploadResponse{
+		Success: true,
+		Message: fmt.Sprintf("Successfully uploaded %d expenses", len(expenses)),
 	}
 
-	sendJSONResponse(w, true, "All expenses uploaded successfully")
-}
-
-func sendJSONResponse(w http.ResponseWriter, success bool, message string) {
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(UploadResponse{
-		Success: success,
-		Message: message,
-	})
+	json.NewEncoder(w).Encode(response)
 }

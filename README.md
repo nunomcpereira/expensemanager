@@ -124,6 +124,53 @@ The tool will:
 - Copy all existing data from SQLite
 - Maintain all relationships and data integrity
 
+## Deployment
+
+### Deploy to Render.com (Free Tier)
+
+1. Fork this repository to your GitHub account
+
+2. Create a Render.com account at https://render.com
+
+3. In Render Dashboard:
+   - Click "New +"
+   - Select "Blueprint"
+   - Connect your GitHub account if not already connected
+   - Select your forked repository
+   - Click "Connect"
+
+4. Render will automatically:
+   - Create a PostgreSQL database
+   - Deploy the web service
+   - Configure environment variables
+   - Set up HTTPS
+
+5. Once deployment is complete, click the generated URL to access your application
+
+### Manual Deployment
+
+If you prefer to deploy manually or to another platform:
+
+1. Build the Docker image:
+   ```bash
+   docker build -t expensemanager .
+   ```
+
+2. Set up environment variables:
+   ```bash
+   export DB_HOST=your-db-host
+   export DB_PORT=5432
+   export DB_USER=your-db-user
+   export DB_PASSWORD=your-db-password
+   export DB_NAME=expensemanager
+   export DB_SSLMODE=require
+   ```
+
+3. Run with docker-compose:
+   ```bash
+   docker-compose -f docker-compose.prod.yml up -d
+   ```
+
 ## License
 
 MIT License 

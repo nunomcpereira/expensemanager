@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: expensemanager
+    env: docker
+    region: frankfurt
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: DB_HOST
+        fromDatabase:
+          name: expensemanager-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: expensemanager-db
+          property: port
+      - key: DB_USER
+        fromDatabase:
+          name: expensemanager-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: expensemanager-db
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: expensemanager-db
+          property: database
+      - key: DB_SSLMODE
+        value: require
+
+databases:
+  - name: expensemanager-db
+    region: frankfurt
+    plan: free 

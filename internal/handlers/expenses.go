@@ -54,6 +54,7 @@ type TemplateData struct {
 	UserID    int64
 	UserName  string
 	UserEmail string
+	Language  string
 	// Analytics fields
 	TotalSpent     float64
 	MonthlyTotals  []models.MonthlyTotal
@@ -76,6 +77,9 @@ func (h *Handler) GetTemplateData(r *http.Request) *TemplateData {
 	}
 	if userName, ok := session.Values["user_name"].(string); ok {
 		data.UserName = userName
+	}
+	if language, ok := session.Values["language"].(string); ok {
+		data.Lang = language
 	}
 	if userEmail, ok := session.Values["user_email"].(string); ok {
 		data.UserEmail = userEmail

@@ -14,6 +14,7 @@ type User struct {
 type LoginForm struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	Language string `json:"language"`
 }
 
 type RegisterForm struct {

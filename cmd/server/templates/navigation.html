@@ -25,21 +25,14 @@
                 </div>
             </div>
             <div class="flex items-center space-x-4">
-                <!-- Language Selector -->
-                <select class="form-select rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                        hx-get="/language"
-                        hx-trigger="change"
-                        name="lang">
-                    {{range .AvailableLanguages}}
-                    <option value="{{.}}" {{if eqs . $.Lang}}selected{{end}}>{{t $.Lang (printf "languages.%s" .)}}</option>
-                    {{end}}
-                </select>
+                
 
                 <!-- User Info and Logout -->
                 <div class="flex items-center space-x-4">
                     <div class="text-sm text-gray-700">
                         <i class="fas fa-user mr-1"></i>
                         <span>{{.UserName}}</span>
+                        <span>{{.Language}}</span>
                     </div>
                     <a href="/logout" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
                         <i class="fas fa-sign-out-alt mr-1"></i>

@@ -74,6 +74,7 @@ func (h *AuthHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		form := &models.LoginForm{
 			Email:    r.FormValue("email"),
 			Password: r.FormValue("password"),
+			Language: r.FormValue("language"),
 		}
 
 		user, err := h.db.AuthenticateUser(form.Email, form.Password)
@@ -91,6 +92,7 @@ func (h *AuthHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		session.Values["user_id"] = user.ID
 		session.Values["user_email"] = user.Email
 		session.Values["user_name"] = user.Name
+		session.Values["language"] = form.Language
 		session.Save(r, w)
 
 		http.Redirect(w, r, "/", http.StatusSeeOther)
